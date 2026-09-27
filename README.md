@@ -5,6 +5,7 @@ Placeholder for OES-512 = 16 × OES-32 residual blocks. The weighted latch is a 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status: research prototype](https://img.shields.io/badge/status-research%20prototype-orange.svg)](#what-it-is-not)
 [![Evidence: TARGET](https://img.shields.io/badge/evidence-TARGET-lightgrey.svg)](#evidence-tags)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22985532.svg)](https://doi.org/10.5281/zenodo.22985532)
 
 ## What it is
 
@@ -53,6 +54,8 @@ The normative per-block residual is defined in [oes32-residual@b77b612](https://
 - [oes32-hls](https://github.com/sparkainlp-x/oes32-hls): OES-32 C++ HLS Profile A sidecar (synthesis UNRUN)
 
 ## Citation
+
+Archived on Zenodo: concept DOI [10.5281/zenodo.22985532](https://doi.org/10.5281/zenodo.22985532) (all versions; resolves to the latest). The v0.1.0 archive is [10.5281/zenodo.22985533](https://doi.org/10.5281/zenodo.22985533).
 
 Citation metadata for this specification placeholder is in [CITATION.cff](CITATION.cff); it contains no source code and nothing here has been run (UNRUN). For the per-block residual, cite [oes32-residual v0.1.0](https://github.com/sparkainlp-x/oes32-residual/releases/tag/v0.1.0).
 
