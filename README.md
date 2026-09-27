@@ -86,9 +86,9 @@ The normative per-block residual is defined in [oes32-residual@b77b612](https://
 
 ## Citation
 
-Archived on Zenodo: concept DOI [10.5281/zenodo.22985532](https://doi.org/10.5281/zenodo.22985532) (all versions; resolves to the latest). The v0.1.0 archive is [10.5281/zenodo.22985533](https://doi.org/10.5281/zenodo.22985533).
+Archived on Zenodo: concept DOI [10.5281/zenodo.22985532](https://doi.org/10.5281/zenodo.22985532) (all versions; resolves to the latest). The v0.2.0 archive is the first one with code; the v0.1.0 archive [10.5281/zenodo.22985533](https://doi.org/10.5281/zenodo.22985533) is the earlier specification-only snapshot.
 
-Note: the v0.1.0 Zenodo archive is the earlier specification-only snapshot and does not contain the code added here. Citation metadata is in [CITATION.cff](CITATION.cff). For the per-block residual, cite [oes32-residual v0.1.0](https://github.com/sparkainlp-x/oes32-residual/releases/tag/v0.1.0).
+Citation metadata is in [CITATION.cff](CITATION.cff). For the per-block residual, cite [oes32-residual v0.1.0](https://github.com/sparkainlp-x/oes32-residual/releases/tag/v0.1.0).
 
 ## License
 

@@ -17,9 +17,9 @@ identifiers:
     description: "Concept DOI (all versions, Zenodo)"
   - type: doi
     value: "10.5281/zenodo.22985533"
-    description: "Version DOI for v0.1.0 (Zenodo)"
-version: "0.1.0"
-date-released: "2026-09-26"
+    description: "Version DOI for v0.1.0 (Zenodo; earlier specification-only snapshot)"
+version: "0.2.0"
+date-released: "2026-09-27"
 abstract: >-
   Reference implementation of the OES-512 layout: 512 channels as 16 blocks of
   32 (16 × OES-32), each block scored with S = 0.45·Peak + 0.35·RMS +

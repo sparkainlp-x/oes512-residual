@@ -6,9 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-27
+
+First archived release that contains code (earlier v0.1.0 was a specification-only snapshot).
+
 ### Added
 - OES-512 reference latch (16 × 32 residual blocks), seed-42 SYNTHETIC benchmark, tests, CI and the browser avatar on GitHub Pages.
 - This changelog.
+
+### Changed
+- `.zenodo.json` adds the `spark-ai-nlp` Zenodo community; `CITATION.cff` version 0.2.0.
 
 ## [0.1.0] - 2026-09-26
 
