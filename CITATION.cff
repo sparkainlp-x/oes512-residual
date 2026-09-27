@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "This repository is a specification placeholder with no source code. If you reference the OES-512 layout, please cite it as below and describe it as TARGET / UNRUN."
-title: "oes512-residual: OES-512 specification placeholder (16 × OES-32 residual blocks)"
+message: "If you use this software, please cite it as below. The seed-42 benchmark is SYNTHETIC; operational, field and medical performance is UNRUN (not claimed)."
+title: "oes512-residual: OES-512 reference implementation and seed-42 synthetic benchmark (16 × OES-32 residual blocks)"
 type: software
 authors:
   - family-names: "Brisson"
@@ -21,14 +21,17 @@ identifiers:
 version: "0.1.0"
 date-released: "2026-09-26"
 abstract: >-
-  Specification-only placeholder recording the planned OES-512 layout: 512
-  channels as 16 blocks of 32 (16 × OES-32), each block evaluated with the
-  normative OES-32 residual (ADR-001), combined by a weighted latch. The layout
-  and weighted latch are TARGET. No source code is published; nothing has been
-  run (UNRUN); no metrics or results.
+  Reference implementation of the OES-512 layout: 512 channels as 16 blocks of
+  32 (16 × OES-32), each block scored with S = 0.45·Peak + 0.35·RMS +
+  0.20·MeanAbs on the absolute residual and latched at τ = 0.50, plus a seed-42
+  synthetic benchmark over four Gaussian regimes and a browser avatar. The
+  per-block residual contract is defined in oes32-residual (ADR-001). Benchmark
+  results are SYNTHETIC; the regimes are far apart, so perfect scores show they
+  are easy to separate, not that the method is operational. Operational, field
+  and medical performance is UNRUN (not claimed).
 keywords:
   - oes512
   - oes32
   - residual
-  - specification
-  - placeholder
+  - weighted latch
+  - synthetic benchmark
