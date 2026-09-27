@@ -54,7 +54,7 @@ The normative per-block residual is defined in [oes32-residual@b77b612](https://
 
 ## Citation
 
-Nothing citable yet. Cite [oes32-residual v0.1.0](https://github.com/sparkainlp-x/oes32-residual/releases/tag/v0.1.0) for the per-block residual.
+Citation metadata for this specification placeholder is in [CITATION.cff](CITATION.cff); it contains no source code and nothing here has been run (UNRUN). For the per-block residual, cite [oes32-residual v0.1.0](https://github.com/sparkainlp-x/oes32-residual/releases/tag/v0.1.0).
 
 ## License
 
