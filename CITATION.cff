@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "This repository is a specification placeholder with no source code. If you reference the OES-512 layout, please cite it as below and describe it as TARGET / UNRUN."
+title: "oes512-residual: OES-512 specification placeholder (16 × OES-32 residual blocks)"
+type: software
+authors:
+  - family-names: "Brisson"
+    given-names: "Jean-François"
+    affiliation: "Spark AI NLP"
+    # orcid: "https://orcid.org/0000-0000-0000-0000"  # TODO: add ORCID when available
+repository-code: "https://github.com/sparkainlp-x/oes512-residual"
+url: "https://sparkainlpx.xyz"
+license: MIT
+version: "0.1.0"
+date-released: "2026-09-26"
+abstract: >-
+  Specification-only placeholder recording the planned OES-512 layout: 512
+  channels as 16 blocks of 32 (16 × OES-32), each block evaluated with the
+  normative OES-32 residual (ADR-001), combined by a weighted latch. The layout
+  and weighted latch are TARGET. No source code is published; nothing has been
+  run (UNRUN); no metrics or results.
+keywords:
+  - oes512
+  - oes32
+  - residual
+  - specification
+  - placeholder
