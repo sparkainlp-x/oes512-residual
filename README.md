@@ -3,7 +3,7 @@
 OES-512 = 16 × OES-32 residual blocks. This repository publishes a **reference implementation** of the 16 × 32 block layout and the weighted latch, a **seed-42 SYNTHETIC benchmark**, and a small browser avatar that follows the latch. Operational, field, and medical performance is **not claimed (UNRUN)**.
 
 [![CI](https://github.com/sparkainlp-x/oes512-residual/actions/workflows/ci.yml/badge.svg)](https://github.com/sparkainlp-x/oes512-residual/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Status: research prototype](https://img.shields.io/badge/status-research%20prototype-orange.svg)](#what-it-is-not)
 [![Evidence: SYNTHETIC](https://img.shields.io/badge/evidence-SYNTHETIC-blue.svg)](#evidence-tags)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22985532.svg)](https://doi.org/10.5281/zenodo.22985532)
@@ -92,4 +92,8 @@ Citation metadata is in [CITATION.cff](CITATION.cff). For the per-block residual
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+This software is available under the GNU Affero General Public License v3.0 only (AGPL-3.0-only); see [LICENSE](LICENSE).
+
+Organizations that want to use it in proprietary products or services without AGPL obligations can contact the author about a commercial license via https://sparkainlpx.xyz.
+
+Versions published before 2026-09-29 were released under the MIT License and remain available under those terms.
