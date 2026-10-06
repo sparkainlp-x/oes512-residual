@@ -6,8 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-06
+
+Packaging fix: removes 16 third-party package files accidentally included in the v0.4.0 archive; no code or demo changes. The demo page stays at version 0.4.0. This release supersedes v0.4.0.
+
 ### Changed
 - `CITATION.cff` and README list the v0.4.0 version DOI 10.5281/zenodo.23191378.
+- `CITATION.cff` version 0.4.1. `.zenodo.json` no longer sets a version, so Zenodo takes it from the release tag (as for v0.1.0–v0.3.0).
+- `.gitignore` also covers `*.tar.gz` and `node_modules/`.
 
 ### Removed
 - 16 third-party Python package archives (`cffconvert` and its dependencies: 15 `.whl` files and `docopt-0.6.2.tar.gz`, about 2.3 MB) that were committed by mistake at the repository root in the v0.4.0 release commit. They were downloaded while validating `CITATION.cff`; they are not part of the project and nothing uses them. They remain in the v0.4.0 tag and its Zenodo archive, which cannot be changed. `*.whl` is now in `.gitignore`.
