@@ -17,6 +17,9 @@ All notable changes to this project are documented here. The format follows
 - Talk to Sparky brain: French "je suis inquiet…" is no longer treated as a medical question. It gets the factual answer with an empathy opener. "Dois-je m'inquiéter?" and other medical questions still get the fixed safety reply.
 - The brain test now allows exactly one URL in the page scripts: the default personality's brand link.
 
+### Fixed
+- Demo page: empty inline favicon (`data:,`), so browsers no longer log a 404 for `/favicon.ico` on GitHub Pages.
+
 ## [0.4.1] - 2026-10-06
 
 Packaging fix: removes 16 third-party package files accidentally included in the v0.4.0 archive; no code or demo changes. The demo page stays at version 0.4.0. This release supersedes v0.4.0.

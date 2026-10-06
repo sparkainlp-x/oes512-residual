@@ -37,6 +37,7 @@ check('no network calls in page scripts (fetch, XHR, WebSocket, EventSource, sen
 const scriptUrls = [...new Set(scripts.match(/https?:\/\/[^\s'"`)<>]+/gi) || [])];
 check('the only http(s) URL in page scripts is the default personality’s brand link (used as a link, never fetched)', scriptUrls.join() === 'https://frederictonholograms.com', scriptUrls.join());
 check('no http(s) URLs in src/href/action attributes', !/(src|href|action)\s*=\s*["']https?:/i.test(html));
+check('empty inline favicon, so browsers do not request /favicon.ico (404 on GitHub Pages)', /<link rel="icon" href="data:,">/.test(html));
 check('brain block has no DOM, storage or network access', !/\b(document|window|localStorage|sessionStorage|fetch|XMLHttpRequest|navigator)\b/.test(brainM[1]));
 check('optional AI-model hook documented and disabled', /OPTIONAL AI-MODEL BRAIN HOOK/.test(html) && /const SparkyRemoteBrain = \{ enabled: false, reply: null/.test(html));
 check('displayed version is v0.5.0', html.includes('id="demoVersion">v0.5.0<') && html.includes("const DEMO_VERSION = '0.5.0'"));
