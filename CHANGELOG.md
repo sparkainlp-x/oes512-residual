@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- `CITATION.cff` and README list the v0.4.0 version DOI 10.5281/zenodo.23191378.
+
+### Removed
+- 16 third-party Python package archives (`cffconvert` and its dependencies: 15 `.whl` files and `docopt-0.6.2.tar.gz`, about 2.3 MB) that were committed by mistake at the repository root in the v0.4.0 release commit. They were downloaded while validating `CITATION.cff`; they are not part of the project and nothing uses them. They remain in the v0.4.0 tag and its Zenodo archive, which cannot be changed. `*.whl` is now in `.gitignore`.
+
 ## [0.4.0] - 2026-10-06
 
 ### Added
