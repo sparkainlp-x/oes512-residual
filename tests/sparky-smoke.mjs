@@ -81,12 +81,17 @@ window.addEventListener('load', async () => {
     S.inputEmptyAfterSubmit = $('askInput').value === '';
     // personality: load files through the real file input
     const wait = (ms) => new Promise(r => setTimeout(r, ms));
+    // The page reads the file asynchronously. Chrome's virtual time skips timers ahead, so wait on real blob reads
+    // until the status line has been rewritten, instead of sleeping for a fixed time.
     const loadFile = async (obj, name) => {
+      const file = new File([typeof obj === 'string' ? obj : JSON.stringify(obj)], name, { type: 'application/json' });
       const dt = new DataTransfer();
-      dt.items.add(new File([typeof obj === 'string' ? obj : JSON.stringify(obj)], name, { type: 'application/json' }));
+      dt.items.add(file);
+      $('personaStatus').textContent = '';
       $('personaFile').files = dt.files;
       $('personaFile').dispatchEvent(new Event('change'));
-      await wait(300);
+      for (let i = 0; i < 400 && !$('personaStatus').textContent; i++) { await file.text(); await wait(0); }
+      if (!$('personaStatus').textContent) S.errors.push('test harness: no status after loading ' + name);
     };
     const store = () => { try { return localStorage.getItem('sparky.personality.v1'); } catch (e) { return 'unavailable'; } };
     const lastLabel = () => { const it = document.querySelectorAll('#chatLog li.sparky'); return it[it.length - 1].firstChild.textContent; };
