@@ -24,7 +24,7 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.22985533"
     description: "Version DOI for v0.1.0 (Zenodo; earlier specification-only snapshot)"
-version: "0.3.0"
+version: "0.4.0"
 date-released: "2026-10-06"
 abstract: >-
   Reference implementation of the OES-512 layout: 512 channels as 16 blocks of
@@ -33,7 +33,10 @@ abstract: >-
   synthetic benchmark over four Gaussian regimes and a browser avatar.
   Version 0.3.0 adds a separate bilingual educational demo page (synthetic
   reference band, missing-data state, experimental parity asymmetry) with a
-  Node self-test; the demo is not the normative reference. The
+  Node self-test; the demo is not the normative reference. Version 0.4.0
+  adds "Talk to Sparky", an offline rule-based voice and text assistant in
+  the demo page that explains the on-screen analysis in English and French
+  (teaching demo, not a medical device). The
   per-block residual contract is defined in oes32-residual (ADR-001). Benchmark
   results are SYNTHETIC; the regimes are far apart, so perfect scores show they
   are easy to separate, not that the method is operational. Operational, field
@@ -45,4 +48,5 @@ keywords:
   - weighted latch
   - synthetic benchmark
   - educational demo
+  - voice assistant
   - anomaly detection

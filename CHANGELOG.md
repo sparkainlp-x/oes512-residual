@@ -6,12 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-06
+
 ### Added
 - `sparky-oes512-demo.html` demo version 0.4.0 (shown on the page): a "Talk to Sparky / Parler à Sparky" panel. Push-to-talk voice questions via the Web Speech API (en-CA / fr-CA, following the page language), a text box that always works, spoken replies with an animated beaver (reduced-motion aware), a conversation log with an aria-live region, and a stop button. Answers come from an offline rule-based brain (`BEGIN/END SPARKY BRAIN`) that quotes the analysis on screen: status, block explanations, score formula, syndrome, missing data, parity meter, limits, scenario and language switching by voice, help, and a fixed safety answer for medical questions. No network calls; a disabled, documented hook marks where a model-backed brain could be added later. The OES core is unchanged.
 - `tests/sparky-brain.test.mjs` (brain intents in EN/FR against the core's numbers, no-network and i18n checks) and `tests/sparky-smoke.mjs` (headless Chrome smoke test, with and without speech APIs); both run in the Node 20 CI job.
+- README section "Talk to Sparky" (browser support, offline use, privacy note on browser speech recognition).
 
 ### Changed
 - `CITATION.cff` and README list the v0.3.0 version DOI 10.5281/zenodo.23186521.
+- `CITATION.cff` version 0.4.0; `.zenodo.json` version 0.4.0, description and keywords mention the Talk to Sparky assistant.
 
 ## [0.3.0] - 2026-10-06
 
