@@ -47,5 +47,7 @@ jobs:
         run: node tests/sparky-demo.test.mjs
       - name: Run Talk to Sparky brain self-test
         run: node tests/sparky-brain.test.mjs
+      - name: Run Sparky personality self-test
+        run: node tests/sparky-personality.test.mjs
       - name: Headless Chrome smoke test (page load, text questions, no speech APIs)
         run: node tests/sparky-smoke.mjs

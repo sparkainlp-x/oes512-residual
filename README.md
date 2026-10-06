@@ -27,7 +27,10 @@ Files:
 | [`sparky-oes512-demo.html`](sparky-oes512-demo.html) | Separate educational demo page (self-contained, no external scripts); not the normative reference |
 | [`tests/sparky-demo.test.mjs`](tests/sparky-demo.test.mjs) | Node self-test for the demo's scoring and summary core (`node tests/sparky-demo.test.mjs`) |
 | [`tests/sparky-brain.test.mjs`](tests/sparky-brain.test.mjs) | Node self-test for the demo's offline "Talk to Sparky" brain, i18n and no-network checks |
+| [`tests/sparky-personality.test.mjs`](tests/sparky-personality.test.mjs) | Node self-test for the demo's personality layer: validation, hard safety rules, numbers unchanged |
 | [`tests/sparky-smoke.mjs`](tests/sparky-smoke.mjs) | Headless Chrome smoke test for the demo page (skips if no Chrome/Chromium is installed) |
+| [`personalities/sparky-empathetic-beaver.json`](personalities/sparky-empathetic-beaver.json) | Default "Talk to Sparky" personality (empathetic AI beaver, Fredericton Holograms) as a loadable example |
+| [`docs/PERSONALITY.md`](docs/PERSONALITY.md) | Personality file format, rules and validation |
 
 ## What it is NOT
 
@@ -80,9 +83,9 @@ Hosted copy on GitHub Pages: <https://sparkainlp-x.github.io/oes512-residual/spa
   - it uses its own scenarios instead of the seed-42 benchmark;
   - it leaves missing channels out of the score and shows such blocks in a separate "missing data" state, never as an anomaly.
 - **Parity asymmetry (experimental).** A = |mean(r)| / (mean|r| + ε) per block: 0 for symmetric zero-mean residuals, 1 when all residuals share one sign. It is an analogy to physical parity and an exploratory signal, **not validated**. It is shown next to the main score and does not trigger alerts unless you tick its checkbox.
-- **Tests:** `node tests/sparky-demo.test.mjs` (Node ≥ 18) loads the page's delimited scoring core and checks the scenarios, missing-data handling, the French summaries, the parity bounds and CSV parsing. `node tests/sparky-brain.test.mjs` checks the "Talk to Sparky" brain in both languages against the core's numbers, and that the page makes no network calls. `node tests/sparky-smoke.mjs` loads the page in headless Chrome, with and without the Web Speech APIs, and asks it questions through the text box. CI runs all three on Node 20.
+- **Tests:** `node tests/sparky-demo.test.mjs` (Node ≥ 18) loads the page's delimited scoring core and checks the scenarios, missing-data handling, the French summaries, the parity bounds and CSV parsing. `node tests/sparky-brain.test.mjs` checks the "Talk to Sparky" brain in both languages against the core's numbers, and that the page makes no network calls. `node tests/sparky-personality.test.mjs` checks personality validation and that a personality never changes the safety reply, the numbers or the alert facts. `node tests/sparky-smoke.mjs` loads the page in headless Chrome, with and without the Web Speech APIs, asks it questions through the text box and loads personality files through the file input. CI runs all four on Node 20.
 
-### Talk to Sparky (demo v0.4.0)
+### Talk to Sparky (demo v0.4.0+)
 
 The demo page has a **Talk to Sparky / Parler à Sparky** panel. Press the button and ask a question out loud (or hold it while you talk), or type in the text box. Sparky answers in the page language, shows the answer in a conversation log and reads it aloud, and the beaver's mouth moves while it speaks (a static open mouth when the system asks for reduced motion).
 
@@ -91,6 +94,10 @@ The demo page has a **Talk to Sparky / Parler à Sparky** panel. Press the butto
 - **Browser support:** voice input uses the Web Speech API's `SpeechRecognition`. It works best in **Chrome and Edge**; Safari support depends on the version and on dictation settings, and Firefox has no speech recognition. Spoken replies use `speechSynthesis`, which most browsers have, but the available voices depend on the system (a Canadian English or French voice is used when one is installed). **The text box works in every browser.** When opened from a local file, Chrome may ask for microphone permission each time.
 - **Offline:** the page, the scoring and Sparky's answers run entirely in the browser with no network access.
 - **Privacy:** speech recognition is provided by the browser, not by this page. **In Chrome, your audio may be sent to Google's servers to be transcribed**, and without a connection voice input fails with a message (Edge may likewise use Microsoft's online service, and Safari Apple's). If you do not want your voice to leave your device, type your questions instead; typed questions and all of Sparky's answers stay on your device. Spoken replies use the system's voices; some browsers also offer online voices, and Sparky prefers local ones when available.
+
+### Personality (demo v0.5.0)
+
+By default Sparky speaks as **Sparky, the empathetic AI beaver** for [Fredericton Holograms](https://frederictonholograms.com): warm, patient and honest. It opens with "I hear you." / « Ça se comprend. » when you sound worried or when alerts are on screen, and adds an occasional light beaver catchphrase. Use **Load personality** in the talk panel to load a different `.json` personality (name, brand line, greeting, tone, tu/vous, empathy openers, catchphrases, voice rate/pitch/hints, accent colour), and **Reset to default** to go back. Files are checked strictly (64 KB max, known fields only, text only, https brand links) and are never uploaded. A personality only changes the wording: the medical-safety reply, every number and every alert or missing-data fact stay exactly as the built-in brain says them, and there are no catchphrases on safety or alert replies. See [`docs/PERSONALITY.md`](docs/PERSONALITY.md) and the example [`personalities/sparky-empathetic-beaver.json`](personalities/sparky-empathetic-beaver.json).
 
 ## Evidence tags
 

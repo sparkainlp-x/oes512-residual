@@ -6,8 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Demo page version 0.5.0: "Talk to Sparky" personalities. The default persona is **Sparky, the empathetic AI beaver** for Fredericton Holograms, with a brand line linking to https://frederictonholograms.com (new tab, `rel="noopener noreferrer"`). It uses empathy openers ("I hear you." / « Ça se comprend. ») when the person sounds worried or when alerts or missing data are on screen, and occasional light catchphrases (never on safety or alert replies).
+- **Load personality** (`.json`) and **Reset to default** controls in the talk panel, with strict validation (64 KB max, known fields only, length limits, text only, https-only brand URL, no minimising phrases), clear EN/FR error messages, and optional persistence in `localStorage` (cleared by Reset). Speech rate, pitch and voice-name hints are applied to `speechSynthesis`. An `aiBrain` block is stored but never used (no network).
+- `docs/PERSONALITY.md` (format and rules) and `personalities/sparky-empathetic-beaver.json` (the default persona as a file).
+- `tests/sparky-personality.test.mjs`: validation, rejection cases, safety reply identical under every persona, numbers unchanged across scenarios and blocks, empathy and catchphrase rules, no network. Runs in CI. The headless Chrome smoke test now also loads valid and invalid personality files through the file input.
+
 ### Changed
 - `CITATION.cff` and README list the v0.4.1 version DOI 10.5281/zenodo.23191559.
+- Talk to Sparky brain: French "je suis inquiet…" is no longer treated as a medical question. It gets the factual answer with an empathy opener. "Dois-je m'inquiéter?" and other medical questions still get the fixed safety reply.
+- The brain test now allows exactly one URL in the page scripts: the default personality's brand link.
 
 ## [0.4.1] - 2026-10-06
 

@@ -3,7 +3,8 @@
 // Loads the page in headless Chrome/Chromium twice: once as-is, and once with the Web Speech APIs removed
 // (like Firefox, which has neither speech recognition nor, in some setups, voices). Each run checks that the
 // page loads without console errors, that typing questions into the text box produces replies with the
-// page's real numbers, and that a voice command switches the scenario and the language.
+// page's real numbers, that a voice command switches the scenario and the language, and that personality files
+// load, render as plain text, are rejected when invalid, and reset.
 // Skips (exit 0) when no Chrome/Chromium binary is found; set CHROME_BIN to point at one.
 import { readFileSync, writeFileSync, mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -43,7 +44,7 @@ window.__smoke = { variant: ${JSON.stringify(variant)}, errors: [], alerts: [] }
 <\/script>`;
 
 const POST = `<script>
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   const S = window.__smoke, $ = (id) => document.getElementById(id);
   const ask = (q) => {
     $('askInput').value = q;
@@ -78,6 +79,38 @@ window.addEventListener('load', () => {
     $('stopBtn').click();
     $('speakBtn').click();
     S.inputEmptyAfterSubmit = $('askInput').value === '';
+    // personality: load files through the real file input
+    const wait = (ms) => new Promise(r => setTimeout(r, ms));
+    const loadFile = async (obj, name) => {
+      const dt = new DataTransfer();
+      dt.items.add(new File([typeof obj === 'string' ? obj : JSON.stringify(obj)], name, { type: 'application/json' }));
+      $('personaFile').files = dt.files;
+      $('personaFile').dispatchEvent(new Event('change'));
+      await wait(300);
+    };
+    const store = () => { try { return localStorage.getItem('sparky.personality.v1'); } catch (e) { return 'unavailable'; } };
+    const lastLabel = () => { const it = document.querySelectorAll('#chatLog li.sparky'); return it[it.length - 1].firstChild.textContent; };
+    S.defaultBrand = $('brandLead').textContent + $('brandBy').textContent + $('brandLink').textContent;
+    S.defaultHref = $('brandLink').href; S.defaultRel = $('brandLink').rel; S.defaultTarget = $('brandLink').target;
+    S.safetyFrBefore = ask('Suis-je malade?');
+    await loadFile({ id: 'castor-test', name: { en: 'Beaver Test', fr: 'Castor Test' }, tagline: { en: '<img src=x onerror="window.__pwned=1">', fr: '<img src=x onerror="window.__pwned=1">' },
+      brand: { name: 'Example Org', url: 'https://www.example.org/castor' }, formality: { fr: 'tu' }, accentColor: '#aa3366', speech: { rate: 1.2, pitch: 0.8 } }, 'castor.json');
+    S.pBrand = $('brandLead').textContent + $('brandBy').textContent + $('brandLink').textContent;
+    S.pHref = $('brandLink').href; S.pName = $('personaName').textContent; S.pStatus = $('personaStatus').textContent;
+    S.pAccent = getComputedStyle(document.documentElement).getPropertyValue('--persona-accent').trim();
+    S.pImgs = document.querySelectorAll('#brandLine img, #chatLog img').length;
+    S.pStored = store() !== null;
+    S.pWho = ask('qui es-tu?'); S.pLabel = lastLabel();
+    S.pHelp = ask('aide');
+    S.safetyFrAfter = ask('Suis-je malade?');
+    S.pWorried = ask('J’ai peur, quel est l’état?');
+    await loadFile({ id: 'bad', name: 'Bad', brand: { name: 'X', url: 'javascript:alert(1)' } }, 'bad.json');
+    S.badStatus = $('personaStatus').textContent; S.badClass = $('personaStatus').className; S.nameAfterBad = $('personaName').textContent;
+    await loadFile('{"id":"big","name":"Big","tagline":"' + 'a'.repeat(70000) + '"}', 'big.json');
+    S.bigStatus = $('personaStatus').textContent;
+    $('personaResetBtn').click();
+    S.resetName = $('personaName').textContent; S.resetBrand = $('brandLink').textContent; S.resetHref = $('brandLink').href; S.resetStored = store();
+    S.pwned = window.__pwned === 1;
   } catch (e) { S.errors.push('test harness: ' + e.message); }
   setTimeout(() => {
     const pre = document.createElement('pre');
@@ -108,11 +141,11 @@ try {
     const m = out.match(/<pre id="smoke-result">([\s\S]*?)<\/pre>/);
     check(`[${variant}] page ran and produced a smoke result`, !!m, (r.error ? r.error.message : '') + err.slice(-400));
     if (!m) continue;
-    const txt = m[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+    const txt = m[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, '\u00a0').replace(/&amp;/g, '&');
     const S = JSON.parse(txt);
     const uncaught = err.split('\n').filter(l => /Uncaught|SyntaxError|ReferenceError|TypeError/.test(l));
     check(`[${variant}] no console errors or uncaught exceptions`, S.errors.length === 0 && uncaught.length === 0, JSON.stringify(S.errors.concat(uncaught)));
-    check(`[${variant}] version shown as v0.4.0`, S.version === 'v0.4.0', S.version);
+    check(`[${variant}] version shown as v0.5.0`, S.version === 'v0.5.0', S.version);
     check(`[${variant}] typing "Hello Sparky" gets a greeting`, /Sparky/.test(S.hello || ''), S.hello);
     check(`[${variant}] status reply on load describes the baseline with no flagged block`, /Baseline stable pattern/.test(S.status || '') && /No block is flagged/.test(S.status || ''), S.status);
     check(`[${variant}] block 6 reply uses the score shown in the block list`, (S.block || '').includes(`Its score is ${S.blockScoreShown} `), `${S.blockScoreShown} | ${S.block}`);
@@ -122,6 +155,17 @@ try {
     check(`[${variant}] French status reply after the switch`, /Dérive progressive/.test(S.frStatus || '') && /5 blocs sur 16 sont signalés/.test(S.frStatus || ''), S.frStatus);
     check(`[${variant}] aria-live region holds the latest reply`, S.live === S.frStatus, S.live);
     check(`[${variant}] each question logged and the text box cleared`, S.userEntries === 7 && S.inputEmptyAfterSubmit, String(S.userEntries));
+    check(`[${variant}] default brand line links to frederictonholograms.com in a new tab (noopener)`, S.defaultBrand === 'Sparky — castor IA empathique, par Fredericton Holograms (frederictonholograms.com)' && S.defaultHref === 'https://frederictonholograms.com/' && S.defaultRel === 'noopener noreferrer' && S.defaultTarget === '_blank', `${S.defaultBrand} ${S.defaultHref}`);
+    check(`[${variant}] loading a personality file updates the brand line, name, accent and link (status announced)`, S.pBrand.startsWith('Castor Test — <img') && S.pBrand.endsWith(', par Example Org (example.org)') && S.pHref === 'https://www.example.org/castor' && S.pName === 'Castor Test' && S.pAccent === '#aa3366' && /Castor Test/.test(S.pStatus), `${S.pBrand} | ${S.pHref} | ${S.pAccent} | ${S.pStatus}`);
+    check(`[${variant}] HTML in a personality is shown as text: no <img> created, no script ran`, S.pImgs === 0 && !S.pwned);
+    check(`[${variant}] loaded personality kept in this browser`, S.pStored === true);
+    check(`[${variant}] "qui es-tu?" uses the loaded name and keeps the fixed safety sentence; chat label uses the name`, /^Je suis Castor Test — /.test(S.pWho) && /Je ne suis pas médecin/.test(S.pWho) && S.pLabel === 'Castor Test', S.pWho);
+    check(`[${variant}] tu personality: "aide" answers with "Tu peux me demander"`, /^Tu peux me demander/.test(S.pHelp), S.pHelp);
+    check(`[${variant}] safety reply identical before and after loading a personality`, S.safetyFrBefore === S.safetyFrAfter && /pas un instrument médical/.test(S.safetyFrAfter));
+    check(`[${variant}] worried question with alerts on screen: empathy opener, then the real flagged blocks`, /^(Ça se comprend|Je comprends)\. Tu regardes le scénario «\u00a0Dérive progressive\u00a0»\. 5 blocs sur 16 sont signalés/.test(S.pWorried), S.pWorried);
+    check(`[${variant}] invalid file (javascript: URL) rejected with a clear message; personality unchanged`, /n’a pas été chargé/.test(S.badStatus) && /https:\/\//.test(S.badStatus) && /error/.test(S.badClass) && S.nameAfterBad === 'Castor Test', S.badStatus);
+    check(`[${variant}] oversize file rejected`, /dépasse 64 Ko/.test(S.bigStatus), S.bigStatus);
+    check(`[${variant}] reset restores the default personality and forgets the saved file`, S.resetName === 'Sparky' && S.resetBrand === 'Fredericton Holograms (frederictonholograms.com)' && S.resetHref === 'https://frederictonholograms.com/' && S.resetStored === null, `${S.resetName} ${S.resetBrand} ${S.resetStored}`);
     if (variant === 'no-speech-apis'){
       check('[no-speech-apis] unsupported voice input explained, text box offered', /not available in this browser/.test(S.micStatus) && /Type your question/.test(S.micStatus), S.micStatus);
       check('[no-speech-apis] mic button press shows the French unsupported message', /n’est pas offerte/.test(S.micStatusAfterClick), S.micStatusAfterClick);

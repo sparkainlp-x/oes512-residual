@@ -34,11 +34,12 @@ const sb = OES.scoreBlock([0.2, -0.6, 0.1, 0.3]);
 check('OES core score numerically equals 0.45·peak + 0.35·RMS + 0.20·mean|r|', Math.abs(sb.score - (0.45 * 0.6 + 0.35 * Math.sqrt((0.04 + 0.36 + 0.01 + 0.09) / 4) + 0.2 * 0.3)) < 1e-12);
 check('no network calls in page scripts (fetch, XHR, WebSocket, EventSource, sendBeacon, dynamic import)',
   !/\bfetch\s*\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon|\bimport\s*\(|navigator\.serviceWorker|RTCPeerConnection/.test(scripts));
-check('no http(s) URLs anywhere in page scripts', !/https?:\/\//i.test(scripts));
+const scriptUrls = [...new Set(scripts.match(/https?:\/\/[^\s'"`)<>]+/gi) || [])];
+check('the only http(s) URL in page scripts is the default personality’s brand link (used as a link, never fetched)', scriptUrls.join() === 'https://frederictonholograms.com', scriptUrls.join());
 check('no http(s) URLs in src/href/action attributes', !/(src|href|action)\s*=\s*["']https?:/i.test(html));
 check('brain block has no DOM, storage or network access', !/\b(document|window|localStorage|sessionStorage|fetch|XMLHttpRequest|navigator)\b/.test(brainM[1]));
 check('optional AI-model hook documented and disabled', /OPTIONAL AI-MODEL BRAIN HOOK/.test(html) && /const SparkyRemoteBrain = \{ enabled: false, reply: null/.test(html));
-check('displayed version is v0.4.0', html.includes('id="demoVersion">v0.4.0<') && html.includes("const DEMO_VERSION = '0.4.0'"));
+check('displayed version is v0.5.0', html.includes('id="demoVersion">v0.5.0<') && html.includes("const DEMO_VERSION = '0.5.0'"));
 
 // 1. i18n coverage and accessibility of the new controls
 const i18nM = scripts.match(/const I18N = (\{[\s\S]*?\n    \});/);

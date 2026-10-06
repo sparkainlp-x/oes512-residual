@@ -95,6 +95,13 @@
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
     button:focus-visible, input:focus-visible, select:focus-visible, .btn:focus-visible { outline: 3px solid #9fd8e1; outline-offset: 2px; }
     .badge.version { margin-left: 6px; background: rgba(253,171,67,.14); color: #fdd29a; }
+    :root { --persona-accent: #c9a84c; }
+    .brand-line { margin: -4px 0 10px; font-size: 15px; color: var(--muted); }
+    .brand-line a { color: var(--persona-accent); font-weight: 700; text-underline-offset: 3px; }
+    .talk { border-top: 3px solid var(--persona-accent); }
+    .persona-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin: 4px 0 6px; }
+    .persona-row strong { color: var(--persona-accent); }
+    #personaStatus.error { color: #ffb3bc; }
     .talk { margin-top: 24px; display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 22px; }
     .talk h2 { margin: 0 0 6px; }
     .talk > div { min-width: 0; }
@@ -171,8 +178,9 @@
         </svg>
       </div>
       <div>
-        <span class="badge" data-i18n="badge">Spark AI NLP · Independent Demo</span><span class="badge version" id="demoVersion">v0.4.0</span>
+        <span class="badge" data-i18n="badge">Spark AI NLP · Independent Demo</span><span class="badge version" id="demoVersion">v0.5.0</span>
         <h1>Spark OES-512</h1>
+        <p class="brand-line" id="brandLine"><span id="brandLead">Sparky — empathetic AI beaver</span><span id="brandBy"> by </span><a id="brandLink" target="_blank" rel="noopener noreferrer">Fredericton Holograms (frederictonholograms.com)</a></p>
         <p class="lead" data-i18n="lead">An independent Spark AI NLP prototype for explainable 512-channel biosignal monitoring. The interface combines a Canadian beaver avatar, grouped channel visualization, transparent anomaly scoring, bilingual messaging, and mandatory human review.</p>
         <div class="cta">
           <button id="runBtn" data-i18n="run">Run analysis</button>
@@ -200,6 +208,14 @@
           <input id="askInput" type="text" enterkeyhint="send" data-i18n-placeholder="askPlaceholder" placeholder="Try: What’s the status? · Explain block 6 · Show drift" />
           <button type="submit" id="askBtn" data-i18n="send">Ask</button>
         </form>
+        <div class="persona-row" role="group" aria-labelledby="personaLabel">
+          <span class="small"><span id="personaLabel" data-i18n="personaLabel">Personality:</span> <strong id="personaName">Sparky</strong></span>
+          <button id="personaLoadBtn" type="button" class="btn secondary" aria-describedby="personaHelp" data-i18n="personaLoad">Load personality…</button>
+          <input id="personaFile" type="file" accept=".json,application/json" class="sr-only" tabindex="-1" aria-hidden="true" />
+          <button id="personaResetBtn" type="button" class="btn secondary" data-i18n="personaReset">Reset to default</button>
+        </div>
+        <p id="personaStatus" class="small" role="status"></p>
+        <p id="personaHelp" class="small" data-i18n="personaHelp">A personality (.json, up to 64 KB) changes only how Sparky phrases things: name, greeting, empathy, catchphrases and voice. Facts, numbers, alerts and safety answers never change. A loaded file is kept in this browser until you reset.</p>
         <p class="small" data-i18n="privacy">Privacy: in Chrome (and some other browsers), speech recognition may send your audio to the browser vendor’s servers to be transcribed. Typed questions and all of Sparky’s answers stay on your device.</p>
       </div>
       <div>
@@ -510,7 +526,7 @@
       }
 
       const RX = {
-        safety: /\b(sick|ill|illness|disease|diseases|diagnos\w*|medical|medicine|medication|doctor|physician|nurse|health|healthy|symptoms?|treatment|cure|patient|hospital|emergency|heart attack|cancer|dying|die|pain|am i (ok|okay|fine|alright|normal|healthy)|should i (worry|be worried)|is (it|this) (dangerous|serious)|malade|maladie|diagnost\w*|medicale?s?|medicaments?|medecin|docteur|infirmi\w*|sante|symptomes?|traitement|soigner|guerir|patiente?|hopital|urgence|crise cardiaque|mourir|douleur|suis je (correct|normal|normale|ok|malade|en sante)|est ce grave|dangereux|dangereuse|inquiet|inquiete)\b/,
+        safety: /\b(sick|ill|illness|disease|diseases|diagnos\w*|medical|medicine|medication|doctor|physician|nurse|health|healthy|symptoms?|treatment|cure|patient|hospital|emergency|heart attack|cancer|dying|die|pain|am i (ok|okay|fine|alright|normal|healthy)|should i (worry|be worried)|is (it|this) (dangerous|serious)|malade|maladie|diagnost\w*|medicale?s?|medicaments?|medecin|docteur|infirmi\w*|sante|symptomes?|traitement|soigner|guerir|patiente?|hopital|urgence|crise cardiaque|mourir|douleur|suis je (correct|normal|normale|ok|malade|en sante)|est ce grave|dangereux|dangereuse|(dois je|devrais je|est ce que je dois|faut il) m inquieter)\b/,
         langFr: /\b(french|francais|francaise)\b/g,
         langEn: /\b(english|anglais|anglaise)\b/g,
         langCue: /\b(speak|talk|switch|change|use|answer|reply|respond|in|en|parle\w*|passe\w*|repond\w*|mode|language|langue|please|svp|plait)\b/,
@@ -853,6 +869,308 @@
     })();
     // ===== END SPARKY BRAIN =====
 
+    // ===== BEGIN SPARKY PERSONALITY (pure; no DOM, no network, no storage; uses SparkyBrain.norm; extracted by tests/sparky-personality.test.mjs) =====
+    // A personality changes phrasing only: name, tagline and brand line, greeting, farewell, empathy openers,
+    // catchphrases, French tu/vous, English casual/formal, and speech rate/pitch/voice hints. File format: docs/PERSONALITY.md.
+    // Hard rules enforced here, whatever the personality says:
+    //  - the medical-safety reply is returned exactly as the offline brain wrote it (no opener, no catchphrase, no rewording);
+    //  - every other brain reply is kept whole: an empathy opener may go before it and a catchphrase after it, and the
+    //    tu / formal rewording only swaps the fixed phrases listed in TU / FORMAL_EN (none contains a number), so numbers,
+    //    alert facts and missing-data facts are never changed, dropped or softened;
+    //  - no catchphrase on safety replies, while any block is flagged or has missing data, or when the person sounds worried;
+    //  - empathy openers and catchphrases that minimise ("don't worry", "rien de grave", ...) are rejected when a file is loaded;
+    //  - "who are you" always keeps the fixed sentences "no AI model and no network" and "not a doctor / not a medical device";
+    //  - brand links must be https; the aiBrain block is stored for a future model-backed brain and is never used.
+    const SparkyPersonality = (() => {
+      const SCHEMA_ID = 'sparky-personality/1';
+      const MAX_BYTES = 64 * 1024;
+      const LIMITS = { id:64, name:40, tagline:160, greeting:300, farewell:300, brandName:80, url:200, phrase:120, phrases:12, hint:60, hints:6, prompt:4000, notes:500 };
+      const PRESETS = { calm:{ calm:0.9, warmth:0.6, playfulness:0.1 }, warm:{ calm:0.8, warmth:0.9, playfulness:0.3 }, playful:{ calm:0.5, warmth:0.7, playfulness:0.8 } };
+      const TOP = ['schema', 'id', 'name', 'brand', 'tagline', 'greeting', 'farewell', 'tone', 'formality', 'empathy', 'catchphrases', 'speech', 'accentColor', 'aiBrain'];
+      const BAD_CHARS = /[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/;   // control characters and bidi overrides
+      const MINIMISING = /\b(don t worry|do not worry|dont worry|nothing to worry|no need to worry|no worries|it s nothing|nothing serious|not a big deal|it s fine|everything is fine|ne vous inquietez pas|ne t inquiete pas|t inquiete pas|pas de souci|pas de soucis|aucun souci|rien de grave|c est rien|ce n est rien|tout va bien)\b/;
+      const WORRIED = /\b(worried|worry|worrying|scared|afraid|anxious|anxiety|nervous|stressed|stressful|panic|panicking|frightened|terrified|concerned|upset|freaking out|inquiet\w*|peur|effraye\w*|angoiss\w*|stresse\w*|nerveux|nerveuse|paniqu\w*|anxieu\w*)\b/;
+
+      // Default persona: the empathetic AI beaver for Fredericton Holograms. personalities/sparky-empathetic-beaver.json is the same file.
+      const DEFAULT_SOURCE = {
+        schema: SCHEMA_ID,
+        id: 'sparky-empathetic-beaver',
+        name: { en: 'Sparky', fr: 'Sparky' },
+        brand: { name: 'Fredericton Holograms', url: 'https://frederictonholograms.com' },
+        tagline: { en: 'empathetic AI beaver', fr: 'castor IA empathique' },
+        greeting: {
+          en: 'Hi, I’m Sparky, the empathetic AI beaver from Fredericton Holograms. Take your time: I’ll explain what’s on screen as clearly and honestly as I can.',
+          fr: 'Bonjour, je suis Sparky, le castor IA empathique de Fredericton Holograms. Prenez votre temps\u00a0: je vous explique ce qui est à l’écran aussi clairement et honnêtement que possible.'
+        },
+        farewell: { en: 'Take care, and thanks for spending some time with me.', fr: 'Prenez soin de vous, et merci d’avoir pris ce temps avec moi.' },
+        tone: { preset: 'warm', calm: 0.8, warmth: 0.9, playfulness: 0.3 },
+        formality: { en: 'casual', fr: 'vous' },
+        empathy: {
+          openers: {
+            en: ['Let’s look at this together.', 'Thanks for checking in on this.', 'Here’s what I can see, plainly.'],
+            fr: ['Regardons ça ensemble.', 'Merci de vérifier avec moi.', 'Voici ce que je vois, simplement.']
+          },
+          worriedOpeners: {
+            en: ['I hear you.', 'That’s understandable.', 'It makes sense to feel that way.'],
+            fr: ['Ça se comprend.', 'Je vous entends.', 'C’est normal de se sentir comme ça.']
+          }
+        },
+        catchphrases: {
+          en: ['Busy as a beaver, happy to help.', 'Steady as the Saint John River.', 'Anything else I can chew on, eh?'],
+          fr: ['Travaillant comme un castor, toujours content d’aider.', 'Calme comme la rivière Saint-Jean.', 'Autre chose à gruger?']
+        },
+        speech: { rate: 0.95, pitch: 1.05, voiceHints: { en: ['Canada', 'en-CA'], fr: ['Canada', 'fr-CA', 'Québec'] } },
+        accentColor: '#c9a84c',
+        aiBrain: {
+          systemPrompt: {
+            en: 'You are Sparky, an empathetic AI beaver for Fredericton Holograms. Be warm, patient and honest. Never minimise an alert or missing data. Never give medical advice: say this is a teaching demo, not a medical device, and that a human must review every alert. Only use numbers provided by the page.',
+            fr: 'Tu es Sparky, un castor IA empathique pour Fredericton Holograms. Sois chaleureux, patient et honnête. Ne minimise jamais une alerte ni des données manquantes. Ne donne jamais de conseil médical\u00a0: dis qu’il s’agit d’une démo éducative, pas d’un instrument médical, et qu’une personne doit examiner chaque alerte. N’utilise que les chiffres fournis par la page.'
+          },
+          notes: 'Reserved for a future, optional model-backed brain. Stored only; this page never sends it anywhere.'
+        }
+      };
+      // Used for any field a loaded file leaves out (unbranded, neutral).
+      const GENERIC = {
+        tagline: { en: 'guide to the OES-512 demo', fr: 'guide de la démo OES-512' },
+        greeting: { en: 'Hi, I’m {name}!', fr: 'Bonjour, je suis {name}!' },
+        farewell: { en: 'Bye for now!', fr: 'À la prochaine!' },
+        openers: { en: ['Let’s look at this together.', 'Here is what I can see.'], fr: ['Regardons ça ensemble.', 'Voici ce que je vois.'] },
+        worriedOpeners: { en: ['I hear you.', 'That’s understandable.'], fr: ['Ça se comprend.', 'Je comprends.'] }
+      };
+      // Fixed sentences the personality layer adds; they come from code, never from a file.
+      const FIXED = {
+        greetHint: { en: 'Ask me “what’s the status?”, “explain block 6”, or say “help” to hear everything you can ask.',
+                     fr: 'Demandez-moi «\u00a0quel est l’état?\u00a0», «\u00a0explique le bloc 6\u00a0», ou dites «\u00a0aide\u00a0» pour savoir tout ce que vous pouvez demander.' },
+        byeReminder: { en: 'Remember: this is a teaching demo, and a human reviews every alert.', fr: 'N’oubliez pas\u00a0: c’est une démo éducative, et une personne examine chaque alerte.' },
+        whoFacts: { en: 'I explain how 512 synthetic channels are scored in 16 blocks of 32. I run entirely in your browser with simple rules, no AI model and no network. I’m not a doctor and this is not a medical device.',
+                    fr: 'J’explique comment 512 canaux synthétiques sont évalués en 16 blocs de 32. Je fonctionne entièrement dans votre navigateur avec des règles simples, sans modèle d’IA ni réseau. Je ne suis pas médecin et ceci n’est pas un instrument médical.' }
+      };
+      // French "tu": whole fixed phrases from the brain and FIXED, longest first. Never applied to the safety reply.
+      const TU = [
+        ['Aucune analyse n’a encore été lancée. Appuyez sur', 'Aucune analyse n’a encore été lancée. Appuie sur'], ['choisissez d’abord', 'choisis d’abord'],
+        ['Vous regardez', 'Tu regardes'], ['vérifiez les données', 'vérifie les données'], ['Lequel voulez-vous', 'Lequel veux-tu'],
+        ['que vous avez activée', 'que tu as activée'], ['Demandez par exemple', 'Demande par exemple'], ['Demandez-moi', 'Demande-moi'],
+        ['Demandez-en un', 'Demandes-en un'], ['Dites ou tapez', 'Dis ou tape'], ['Dites ', 'Dis '], ['dites ', 'dis '],
+        ['votre navigateur', 'ton navigateur'], ['Vous pouvez me demander', 'Tu peux me demander'],
+        ['tout ce que vous pouvez demander', 'tout ce que tu peux demander'], ['Posez-moi', 'Pose-moi'], ['N’oubliez pas', 'N’oublie pas']
+      ];
+      const FORMAL_EN = [[/\bI’m\b/g, 'I am'], [/\bI’ll\b/g, 'I will'], [/\bcan’t\b/g, 'cannot'], [/\bdidn’t\b/g, 'did not'], [/\bYou’re\b/g, 'You are'], [/\bHere’s\b/g, 'Here is'], [/\bThat’s\b/g, 'That is'], [/\bLet’s\b/g, 'Let us']];
+      const FACTUAL = ['status', 'block', 'missing', 'syndrome', 'scenario', 'parity', 'limits', 'score', 'scenarioInfo', 'blocks'];
+      const NO_CATCHPHRASE = ['safety', 'empty', 'fallback', 'language'];
+
+      const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+      function safeHttpsUrl(s){
+        if (!/^https:\/\//i.test(s)) return null;
+        let u; try { u = new URL(s); } catch (e) { return null; }
+        if (u.protocol !== 'https:' || u.username || u.password || !/^[a-z0-9.-]+\.[a-z0-9-]+$/i.test(u.hostname)) return null;
+        return u;
+      }
+
+      function validate(input){
+        const errors = [];
+        const err = (code, path, extra = {}) => { errors.push({ code, path, ...extra }); };
+        const keys = (obj, allowed, path) => { for (const k of Object.keys(obj)) if (!allowed.includes(k)) err('unknownField', path ? `${path}.${k}` : k); };
+        function str(v, path, max, required){
+          if (v === undefined){ if (required) err('missing', path); return undefined; }
+          if (typeof v !== 'string'){ err('type', path, { expected:'text' }); return undefined; }
+          const s = v.trim();
+          if (!s){ err('empty', path); return undefined; }
+          if (s.length > max){ err('tooLong', path, { max }); return undefined; }
+          if (BAD_CHARS.test(s)){ err('badChars', path); return undefined; }
+          return s;
+        }
+        function bi(v, path, max, required){
+          if (v === undefined){ if (required) err('missing', path); return undefined; }
+          if (typeof v === 'string'){ const s = str(v, path, max, true); return s === undefined ? undefined : { en:s, fr:s }; }
+          if (!isObj(v)){ err('type', path, { expected:'bilingual' }); return undefined; }
+          keys(v, ['en', 'fr'], path);
+          const en = str(v.en, `${path}.en`, max, true), fr = str(v.fr, `${path}.fr`, max, true);
+          return en !== undefined && fr !== undefined ? { en, fr } : undefined;
+        }
+        function list(v, path, max, maxItems){
+          if (!Array.isArray(v)){ err('type', path, { expected:'list' }); return undefined; }
+          if (v.length > maxItems){ err('tooMany', path, { max:maxItems }); return undefined; }
+          const out = [];
+          v.forEach((x, i) => { const s = str(x, `${path}[${i}]`, max, true); if (s !== undefined) out.push(s); });
+          return out;
+        }
+        function biList(v, path, max, maxItems){
+          if (v === undefined) return undefined;
+          if (Array.isArray(v)){ const l = list(v, path, max, maxItems); return l && { en:l, fr:l }; }
+          if (!isObj(v)){ err('type', path, { expected:'list' }); return undefined; }
+          keys(v, ['en', 'fr'], path);
+          const en = v.en === undefined ? [] : list(v.en, `${path}.en`, max, maxItems);
+          const fr = v.fr === undefined ? [] : list(v.fr, `${path}.fr`, max, maxItems);
+          return en && fr ? { en, fr } : undefined;
+        }
+        function num(v, path, min, max){
+          if (v === undefined) return undefined;
+          if (typeof v !== 'number' || !Number.isFinite(v) || v < min || v > max){ err('range', path, { min, max }); return undefined; }
+          return v;
+        }
+        function oneOf(v, path, allowed){
+          if (v === undefined) return undefined;
+          if (!allowed.includes(v)){ err('enum', path, { allowed }); return undefined; }
+          return v;
+        }
+        function obj(v, path, allowed){
+          if (v === undefined) return null;
+          if (!isObj(v)){ err('type', path, { expected:'object' }); return null; }
+          keys(v, allowed, path); return v;
+        }
+        const noMinimising = (l, path) => { if (l) for (const lang of ['en', 'fr']) l[lang].forEach((s, i) => { if (MINIMISING.test(SparkyBrain.norm(s))) err('minimising', `${path}.${lang}[${i}]`); }); return l; };
+
+        if (!isObj(input)){ err('notObject', ''); return { ok:false, errors }; }
+        keys(input, TOP, '');
+        if (input.schema !== undefined && input.schema !== SCHEMA_ID) err('schema', 'schema', { expected:SCHEMA_ID });
+        const p = {};
+        const id = str(input.id, 'id', LIMITS.id, true);
+        if (id !== undefined){ if (/^[a-z0-9][a-z0-9-]*$/.test(id)) p.id = id; else err('badId', 'id'); }
+        p.name = bi(input.name, 'name', LIMITS.name, true);
+        const brand = obj(input.brand, 'brand', ['name', 'url']);
+        if (brand){
+          const bn = str(brand.name, 'brand.name', LIMITS.brandName, true), bu = str(brand.url, 'brand.url', LIMITS.url, true);
+          const u = bu === undefined ? null : safeHttpsUrl(bu);
+          if (bu !== undefined && !u) err('badUrl', 'brand.url');
+          if (bn !== undefined && u) p.brand = { name:bn, url:u.href, host:u.hostname.toLowerCase().replace(/^www\./, '') };
+        }
+        p.tagline = bi(input.tagline, 'tagline', LIMITS.tagline);
+        p.greeting = bi(input.greeting, 'greeting', LIMITS.greeting);
+        p.farewell = bi(input.farewell, 'farewell', LIMITS.farewell);
+        const tone = obj(input.tone, 'tone', ['preset', 'calm', 'warmth', 'playfulness']);
+        if (tone){
+          const preset = oneOf(tone.preset, 'tone.preset', Object.keys(PRESETS));
+          const base = PRESETS[preset || 'warm'];
+          p.tone = { preset: preset || null, calm: num(tone.calm, 'tone.calm', 0, 1) ?? base.calm,
+            warmth: num(tone.warmth, 'tone.warmth', 0, 1) ?? base.warmth, playfulness: num(tone.playfulness, 'tone.playfulness', 0, 1) ?? base.playfulness };
+        }
+        const form = obj(input.formality, 'formality', ['en', 'fr']);
+        if (form) p.formality = { en: oneOf(form.en, 'formality.en', ['casual', 'formal']) || 'casual', fr: oneOf(form.fr, 'formality.fr', ['tu', 'vous']) || 'vous' };
+        const emp = obj(input.empathy, 'empathy', ['openers', 'worriedOpeners']);
+        if (emp){
+          p.openers = noMinimising(biList(emp.openers, 'empathy.openers', LIMITS.phrase, LIMITS.phrases), 'empathy.openers');
+          p.worriedOpeners = noMinimising(biList(emp.worriedOpeners, 'empathy.worriedOpeners', LIMITS.phrase, LIMITS.phrases), 'empathy.worriedOpeners');
+        }
+        p.catchphrases = noMinimising(biList(input.catchphrases, 'catchphrases', LIMITS.phrase, LIMITS.phrases), 'catchphrases');
+        const sp = obj(input.speech, 'speech', ['rate', 'pitch', 'voiceHints']);
+        if (sp) p.speech = { rate: num(sp.rate, 'speech.rate', 0.5, 1.5) ?? null, pitch: num(sp.pitch, 'speech.pitch', 0.5, 1.5) ?? null,
+          voiceHints: biList(sp.voiceHints, 'speech.voiceHints', LIMITS.hint, LIMITS.hints) || { en:[], fr:[] } };
+        if (input.accentColor !== undefined){
+          if (typeof input.accentColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(input.accentColor)) p.accentColor = input.accentColor.toLowerCase();
+          else err('badColor', 'accentColor');
+        }
+        const ai = obj(input.aiBrain, 'aiBrain', ['systemPrompt', 'notes']);
+        if (ai) p.aiBrain = { systemPrompt: bi(ai.systemPrompt, 'aiBrain.systemPrompt', LIMITS.prompt) || null, notes: str(ai.notes, 'aiBrain.notes', LIMITS.notes) || null, used: false };
+        if (errors.length) return { ok:false, errors };
+        return { ok:true, errors, persona: complete(p) };
+      }
+
+      function complete(p){
+        const nonEmpty = (l, fb) => ({ en: l && l.en.length ? l.en : fb.en, fr: l && l.fr.length ? l.fr : fb.fr });
+        return Object.freeze({
+          id: p.id, name: p.name, brand: p.brand || null,
+          tagline: p.tagline || GENERIC.tagline, greeting: p.greeting || GENERIC.greeting, farewell: p.farewell || GENERIC.farewell,
+          tone: p.tone || { preset:'warm', ...PRESETS.warm },
+          formality: p.formality || { en:'casual', fr:'vous' },
+          empathy: { openers: nonEmpty(p.openers, GENERIC.openers), worriedOpeners: nonEmpty(p.worriedOpeners, GENERIC.worriedOpeners) },
+          catchphrases: p.catchphrases || { en:[], fr:[] },
+          speech: p.speech || { rate:null, pitch:null, voiceHints:{ en:[], fr:[] } },
+          accentColor: p.accentColor || null,
+          aiBrain: p.aiBrain || null
+        });
+      }
+
+      function byteLength(text){
+        if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(text).length;
+        return unescape(encodeURIComponent(text)).length;
+      }
+      // text of a .json file -> { ok, persona, errors }
+      function parse(text){
+        text = String(text ?? '');
+        if (byteLength(text) > MAX_BYTES) return { ok:false, errors:[{ code:'tooLarge', path:'', max:MAX_BYTES }] };
+        let data;
+        try { data = JSON.parse(text.replace(/^\uFEFF/, '')); } catch (e) { return { ok:false, errors:[{ code:'notJson', path:'' }] }; }
+        return validate(data);
+      }
+
+      const ERR = {
+        en: { tooLarge:(e)=>`the file is larger than ${e.max / 1024} KB`, notJson:()=>'the file is not valid JSON', notObject:()=>'the file must contain one JSON object',
+          unknownField:(e)=>`unknown field “${e.path}”`, missing:(e)=>`“${e.path}” is required`, type:(e)=>`“${e.path}” must be ${e.expected === 'text' ? 'text' : e.expected === 'list' ? 'a list of texts' : e.expected === 'bilingual' ? 'text or { "en", "fr" }' : 'an object'}`,
+          empty:(e)=>`“${e.path}” is empty`, tooLong:(e)=>`“${e.path}” is longer than ${e.max} characters`, tooMany:(e)=>`“${e.path}” has more than ${e.max} items`,
+          badChars:(e)=>`“${e.path}” contains control or direction-override characters`, badId:()=>'“id” may only use lower-case letters, digits and hyphens',
+          badUrl:()=>'“brand.url” must be a plain https:// web address', badColor:()=>'“accentColor” must look like #c9a84c', range:(e)=>`“${e.path}” must be a number from ${e.min} to ${e.max}`,
+          enum:(e)=>`“${e.path}” must be one of: ${e.allowed.join(', ')}`, schema:(e)=>`“schema” must be "${e.expected}"`, minimising:(e)=>`“${e.path}” minimises concerns (for example “don’t worry”), which Sparky never does` },
+        fr: { tooLarge:(e)=>`le fichier dépasse ${e.max / 1024} Ko`, notJson:()=>'le fichier n’est pas du JSON valide', notObject:()=>'le fichier doit contenir un seul objet JSON',
+          unknownField:(e)=>`champ inconnu «\u00a0${e.path}\u00a0»`, missing:(e)=>`«\u00a0${e.path}\u00a0» est obligatoire`, type:(e)=>`«\u00a0${e.path}\u00a0» doit être ${e.expected === 'text' ? 'un texte' : e.expected === 'list' ? 'une liste de textes' : e.expected === 'bilingual' ? 'un texte ou { "en", "fr" }' : 'un objet'}`,
+          empty:(e)=>`«\u00a0${e.path}\u00a0» est vide`, tooLong:(e)=>`«\u00a0${e.path}\u00a0» dépasse ${e.max} caractères`, tooMany:(e)=>`«\u00a0${e.path}\u00a0» a plus de ${e.max} éléments`,
+          badChars:(e)=>`«\u00a0${e.path}\u00a0» contient des caractères de contrôle ou d’inversion de direction`, badId:()=>'«\u00a0id\u00a0» ne peut contenir que des minuscules, des chiffres et des traits d’union',
+          badUrl:()=>'«\u00a0brand.url\u00a0» doit être une simple adresse web https://', badColor:()=>'«\u00a0accentColor\u00a0» doit ressembler à #c9a84c', range:(e)=>`«\u00a0${e.path}\u00a0» doit être un nombre de ${e.min} à ${e.max}`,
+          enum:(e)=>`«\u00a0${e.path}\u00a0» doit être l’une de ces valeurs\u00a0: ${e.allowed.join(', ')}`, schema:(e)=>`«\u00a0schema\u00a0» doit valoir "${e.expected}"`, minimising:(e)=>`«\u00a0${e.path}\u00a0» minimise les inquiétudes (par exemple «\u00a0rien de grave\u00a0»), ce que Sparky ne fait jamais` }
+      };
+      function describeErrors(errors, lang = 'en'){
+        const M = ERR[lang === 'fr' ? 'fr' : 'en'];
+        const shown = errors.slice(0, 5).map(e => (M[e.code] || (() => e.code))(e));
+        if (errors.length > 5) shown.push(lang === 'fr' ? `et ${errors.length - 5} autre(s) problème(s)` : `and ${errors.length - 5} more`);
+        return shown.join('; ');
+      }
+
+      const isWorried = (text) => WORRIED.test(SparkyBrain.norm(text));
+      const hasConcern = (ctx) => { const R = ctx && ctx.result; return !!(R && ((R.alerts && R.alerts.length) || (R.missing && R.missing.length))); };
+      function pick(list, key){
+        if (!list || !list.length) return '';
+        let h = 2166136261;
+        for (const ch of String(key)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+        return list[(h >>> 0) % list.length];
+      }
+      const fill = (s, p, lang) => String(s).split('{name}').join(p.name[lang]);
+      const catchphraseEvery = (p) => p.tone.playfulness >= 0.67 ? 3 : p.tone.playfulness >= 0.25 ? 5 : 0;
+      function reword(text, p, lang){
+        if (lang === 'fr' && p.formality.fr === 'tu') return TU.reduce((s, [a, b]) => s.split(a).join(b), text);
+        if (lang === 'en' && p.formality.en === 'formal') return FORMAL_EN.reduce((s, [a, b]) => s.replace(a, b), text);
+        return text;
+      }
+      function whoText(p, lang){
+        const tag = fill(p.tagline[lang], p, lang).replace(/[.!?]+$/, '');
+        const brand = p.brand ? (lang === 'fr' ? `, par ${p.brand.name} (${p.brand.host})` : ` by ${p.brand.name} (${p.brand.host})`) : '';
+        return (lang === 'fr' ? `Je suis ${p.name.fr} — ${tag}${brand}.` : `I’m ${p.name.en} — ${tag}${brand}.`) + ' ' + FIXED.whoFacts[lang];
+      }
+      // brain output { intent, reply } -> the reply in this persona's voice (see the hard rules above)
+      function wrap(out, said, lang, ctx, persona, turn = 0){
+        lang = lang === 'fr' ? 'fr' : 'en';
+        const p = persona || DEFAULT;
+        const intent = out && out.intent, reply = String((out && out.reply) || '');
+        if (intent === 'safety') return reply;
+        const worried = isWorried(said), concern = hasConcern(ctx);
+        let body = reply;
+        if (intent === 'greeting') body = fill(p.greeting[lang], p, lang) + ' ' + FIXED.greetHint[lang];
+        else if (intent === 'who') body = whoText(p, lang);
+        else if (intent === 'bye') body = fill(p.farewell[lang], p, lang) + ' ' + FIXED.byeReminder[lang];
+        body = reword(body, p, lang);
+        const parts = [];
+        if (worried) parts.push(pick(p.empathy.worriedOpeners[lang], said + '|' + turn));
+        else if (concern && p.tone.warmth >= 0.34 && FACTUAL.includes(intent)) parts.push(pick(p.empathy.openers[lang], said + '|' + turn));
+        parts.push(body);
+        const every = catchphraseEvery(p);
+        if (every && turn > 0 && turn % every === 0 && !worried && !concern && !NO_CATCHPHRASE.includes(intent) && p.catchphrases[lang].length)
+          parts.push(pick(p.catchphrases[lang], turn));
+        return parts.filter(Boolean).join(' ');
+      }
+      function speechSettings(p){
+        p = p || DEFAULT;
+        return { rate: p.speech.rate ?? Math.round((1.05 - 0.15 * p.tone.calm) * 100) / 100, pitch: p.speech.pitch ?? 1, voiceHints: p.speech.voiceHints };
+      }
+      function brandLine(p, lang){
+        p = p || DEFAULT; lang = lang === 'fr' ? 'fr' : 'en';
+        return { lead: `${p.name[lang]} — ${fill(p.tagline[lang], p, lang)}`, by: p.brand ? (lang === 'fr' ? ', par ' : ' by ') : '',
+          link: p.brand ? { text: `${p.brand.name} (${p.brand.host})`, href: p.brand.url } : null };
+      }
+
+      const DEFAULT = validate(DEFAULT_SOURCE).persona;
+      return { SCHEMA_ID, MAX_BYTES, LIMITS, PRESETS, DEFAULT, DEFAULT_SOURCE, TU, FORMAL_EN, FIXED,
+        validate, parse, describeErrors, wrap, isWorried, hasConcern, speechSettings, brandLine, safeHttpsUrl };
+    })();
+    // ===== END SPARKY PERSONALITY =====
+
     const I18N = {
       en: {
         avatarAria:'Sparky beaver avatar illustration', avatarSvgAria:'Canadian beaver in a red hockey jersey',
@@ -894,7 +1212,14 @@
         micNoMic:'No microphone was found. Type your question instead.',
         micNetwork:'The browser’s speech recognition service could not be reached (in Chrome it runs online). Type your question instead; everything else works offline.',
         micLang:'This browser cannot recognize Canadian English here. Type your question instead.',
-        micError:(e)=>`Voice input stopped${e ? ` (${e})` : ''}. Type your question instead.`
+        micError:(e)=>`Voice input stopped${e ? ` (${e})` : ''}. Type your question instead.`,
+        personaLabel:'Personality:', personaLoad:'Load personality…', personaReset:'Reset to default',
+        personaHelp:'A personality (.json, up to 64 KB) changes only how Sparky phrases things: name, greeting, empathy, catchphrases and voice. Facts, numbers, alerts and safety answers never change. A loaded file is kept in this browser until you reset.',
+        personaLoaded:(n, f, saved)=>`Loaded the personality “${n}” from ${f}.${saved ? ' It is kept in this browser until you reset.' : ' This browser could not keep it, so it lasts until you close the page.'}`,
+        personaRestored:(n)=>`Using the personality “${n}” kept in this browser. Press “Reset to default” to forget it.`,
+        personaResetDone:'Back to the default personality; nothing is kept in this browser.',
+        personaInvalid:(why)=>`This personality file was not loaded: ${why}.`,
+        newTab:'opens in a new tab'
       },
       fr: {
         avatarAria:'Illustration de l’avatar Sparky, un castor', avatarSvgAria:'Castor canadien portant un chandail de hockey rouge',
@@ -936,7 +1261,14 @@
         micNoMic:'Aucun micro n’a été trouvé. Tapez plutôt votre question.',
         micNetwork:'Le service de reconnaissance vocale du navigateur est injoignable (dans Chrome, il fonctionne en ligne). Tapez plutôt votre question; tout le reste fonctionne hors ligne.',
         micLang:'Ce navigateur ne peut pas reconnaître le français canadien ici. Tapez plutôt votre question.',
-        micError:(e)=>`La saisie vocale s’est arrêtée${e ? ` (${e})` : ''}. Tapez plutôt votre question.`
+        micError:(e)=>`La saisie vocale s’est arrêtée${e ? ` (${e})` : ''}. Tapez plutôt votre question.`,
+        personaLabel:'Personnalité\u00a0:', personaLoad:'Charger une personnalité…', personaReset:'Revenir à la personnalité par défaut',
+        personaHelp:'Une personnalité (.json, 64 Ko au maximum) ne change que la façon dont Sparky s’exprime\u00a0: nom, salutation, empathie, expressions et voix. Les faits, les chiffres, les alertes et les réponses de sécurité ne changent jamais. Un fichier chargé est conservé dans ce navigateur jusqu’à la réinitialisation.',
+        personaLoaded:(n, f, saved)=>`Personnalité «\u00a0${n}\u00a0» chargée depuis ${f}.${saved ? ' Elle est conservée dans ce navigateur jusqu’à la réinitialisation.' : ' Ce navigateur n’a pas pu la conserver; elle durera jusqu’à la fermeture de la page.'}`,
+        personaRestored:(n)=>`Personnalité «\u00a0${n}\u00a0» conservée dans ce navigateur. Appuyez sur «\u00a0Revenir à la personnalité par défaut\u00a0» pour l’oublier.`,
+        personaResetDone:'Retour à la personnalité par défaut; rien n’est conservé dans ce navigateur.',
+        personaInvalid:(why)=>`Ce fichier de personnalité n’a pas été chargé\u00a0: ${why}.`,
+        newTab:'s’ouvre dans un nouvel onglet'
       }
     };
 
@@ -950,7 +1282,8 @@
       csvName: '',
       lang: 'en',
       mode: 'calm',
-      lastSummary: ''
+      lastSummary: '',
+      persona: SparkyPersonality.DEFAULT
     };
 
     const $ = (id) => document.getElementById(id);
@@ -967,6 +1300,7 @@
       $('method').textContent = T('method')(OES.REF_FRAMES, `${OES.REF_SEED0}–${OES.REF_SEED0+OES.REF_FRAMES-1}`, OES.fmt(OES.DEFAULT_THRESHOLD, state.lang));
       $('parityText').textContent = T('parityText')(OES.fmt(OES.PARITY_THRESHOLD, state.lang), OES.fmt(OES.PARITY_MIN_MAG, state.lang));
       updateMicUI();
+      renderPersona();
     }
 
     function loadScenario(){
@@ -1051,6 +1385,7 @@
       const payload = {
         project: 'Spark OES-512 Demo',
         demoVersion: DEMO_VERSION,
+        personality: { id: state.persona.id, name: state.persona.name },
         generatedAt: new Date().toISOString(),
         source: state.source === 'csv' ? { type: 'csv', file: state.csvName } : { type: 'scenario', scenario: state.scenario },
         threshold: state.threshold,
@@ -1110,12 +1445,13 @@
     // reply() receives the question, the page language ('en' | 'fr'), the same analysis context the offline brain
     // sees (ctx.result is the live OES result) and the offline answer { reply, intent, action }.
     // Guardrails kept by the page: safety/medical questions, scenario switches and language switches always use
-    // the offline brain; an error, a timeout or an empty answer falls back to the offline reply. Nothing is
+    // the offline brain; an error, a timeout or an empty answer falls back to the offline reply. A personality's
+    // optional aiBrain.systemPrompt (state.persona.aiBrain) is kept for such a brain but is not used. Nothing is
     // implemented here: no request is made, no key is stored, and the hook is off.
     const SparkyRemoteBrain = { enabled: false, reply: null, timeoutMs: 8000 };
 
     // ===== Talk to Sparky (voice and text UI) =====
-    const DEMO_VERSION = '0.4.0';
+    const DEMO_VERSION = '0.5.0';
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
     const TTS_OK = typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined';
     const avatarEl = document.querySelector('.avatar');
@@ -1123,7 +1459,7 @@
     const transcriptEl = $('transcript'), askForm = $('askForm'), askInput = $('askInput');
     const chatLog = $('chatLog'), liveEl = $('sparkyLive'), voiceToggle = $('voiceReplies');
     const talk = { rec: null, listening: false, finalText: '', lastText: '', lastError: '', utterId: 0, watch: null,
-      downAt: 0, wasListening: false, statusKey: '' };
+      downAt: 0, wasListening: false, statusKey: '', turn: 0, personaStatus: null };
 
     function brainContext(){
       return { result: state.result, scenario: state.scenario, source: state.source, csvName: state.csvName,
@@ -1148,8 +1484,11 @@
       if (!TTS_OK) return null;
       const want = lang === 'fr' ? 'fr-ca' : 'en-ca', pre = lang === 'fr' ? 'fr' : 'en';
       const tag = v => String(v.lang || '').replace('_', '-').toLowerCase();
-      const rank = v => { const l = tag(v); const r = l === want ? 0 : l.split('-')[0] === pre ? 2 : 9; return r === 9 ? 9 : r + (v.localService ? 0 : 1); };
-      const voices = (speechSynthesis.getVoices() || []).filter(v => rank(v) < 9).sort((a, b) => rank(a) - rank(b));
+      const hints = (SparkyPersonality.speechSettings(state.persona).voiceHints[lang] || []).map(h => h.toLowerCase());
+      const hinted = v => hints.some(h => String(v.name || '').toLowerCase().includes(h) || tag(v) === h);
+      // language match first, then local (offline) voices, then the personality's voice-name hints
+      const rank = v => { const l = tag(v); const r = l === want ? 0 : l.split('-')[0] === pre ? 4 : 99; return r === 99 ? 99 : r + (v.localService ? 0 : 2) + (hinted(v) ? 0 : 1); };
+      const voices = (speechSynthesis.getVoices() || []).filter(v => rank(v) < 99).sort((a, b) => rank(a) - rank(b));
       return voices[0] || null;
     }
     function setSpeaking(on){
@@ -1171,10 +1510,11 @@
         if (chunks.length && (chunks[chunks.length - 1] + ' ' + s).length < 180) chunks[chunks.length - 1] += ' ' + s;
         else chunks.push(s);
       }
-      const voice = pickVoice(lang);
+      const voice = pickVoice(lang), sp = SparkyPersonality.speechSettings(state.persona);
       chunks.forEach((c, i) => {
         const u = new SpeechSynthesisUtterance(c);
         u.lang = lang === 'fr' ? 'fr-CA' : 'en-CA';
+        u.rate = sp.rate; u.pitch = sp.pitch;
         if (voice) u.voice = voice;
         u.onstart = () => { if (id === talk.utterId) setSpeaking(true); };
         u.onboundary = () => { if (id === talk.utterId) avatarEl.classList.toggle('beat'); };
@@ -1196,7 +1536,7 @@
       li.className = who;
       const w = document.createElement('span');
       w.className = 'who';
-      w.textContent = who === 'user' ? T('you') : 'Sparky';
+      w.textContent = who === 'user' ? T('you') : state.persona.name[state.lang];
       const body = document.createElement('span');
       body.textContent = text;
       li.append(w, body);
@@ -1227,6 +1567,8 @@
         applyBrainAction(out.action);
         if (out.action.then === 'status') reply += ' ' + SparkyBrain.status(state.lang, brainContext());
       }
+      // personality phrasing only (safety replies, numbers and alert/missing-data facts are kept; see SPARKY PERSONALITY)
+      reply = SparkyPersonality.wrap({ intent: out.intent, reply }, said, state.lang, brainContext(), state.persona, ++talk.turn);
       const remoteOk = SparkyRemoteBrain.enabled && typeof SparkyRemoteBrain.reply === 'function' && out.intent !== 'safety' && !out.action;
       if (!remoteOk) { deliver(reply); return; }
       const timeout = new Promise(res => setTimeout(() => res(null), SparkyRemoteBrain.timeoutMs));
@@ -1300,6 +1642,49 @@
     if (TTS_OK){
       try { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', () => {}); } catch (e) { /* ignore */ }
     }
+
+    // --- personality: load / reset / keep in this browser ---
+    const PERSONA_KEY = 'sparky.personality.v1';
+    function storeGet(){ try { return window.localStorage ? window.localStorage.getItem(PERSONA_KEY) : null; } catch (e) { return null; } }
+    function storeSet(text){ try { window.localStorage.setItem(PERSONA_KEY, text); return true; } catch (e) { return false; } }
+    function storeClear(){ try { window.localStorage.removeItem(PERSONA_KEY); } catch (e) { /* storage unavailable */ } }
+    function renderPersona(){
+      const p = state.persona, b = SparkyPersonality.brandLine(p, state.lang), link = $('brandLink');
+      $('brandLead').textContent = b.lead;
+      $('brandBy').textContent = b.by;
+      if (b.link){                     // href comes only from a validated https:// URL
+        link.hidden = false; link.textContent = b.link.text; link.href = b.link.href;
+        link.setAttribute('aria-label', `${b.link.text} (${T('newTab')})`);
+      } else { link.hidden = true; link.removeAttribute('href'); link.textContent = ''; }
+      $('personaName').textContent = p.name[state.lang];
+      document.documentElement.style.setProperty('--persona-accent', p.accentColor || '#4f98a3');
+      const ps = talk.personaStatus;
+      $('personaStatus').className = 'small' + (ps && ps.error ? ' error' : '');
+      $('personaStatus').textContent = !ps ? '' : ps.key === 'personaInvalid' ? T('personaInvalid')(SparkyPersonality.describeErrors(ps.errors, state.lang))
+        : ps.key === 'personaLoaded' ? T('personaLoaded')(p.name[state.lang], ps.file, ps.saved)
+        : ps.key === 'personaRestored' ? T('personaRestored')(p.name[state.lang]) : T(ps.key);
+    }
+    function usePersona(p, status){ state.persona = p; talk.personaStatus = status; renderPersona(); }
+    $('personaLoadBtn').addEventListener('click', () => $('personaFile').click());
+    $('personaFile').addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      let text = '', r;
+      if (file.size > SparkyPersonality.MAX_BYTES) r = { ok:false, errors:[{ code:'tooLarge', path:'', max:SparkyPersonality.MAX_BYTES }] };
+      else { try { text = await file.text(); r = SparkyPersonality.parse(text); } catch (err) { r = { ok:false, errors:[{ code:'notJson', path:'' }] }; } }
+      e.target.value = '';             // allow re-selecting the same file
+      if (!r.ok){ talk.personaStatus = { key:'personaInvalid', errors:r.errors, error:true }; renderPersona(); return; }
+      const saved = storeSet(text);    // the file text is kept and validated again on the next visit
+      usePersona(r.persona, { key:'personaLoaded', file: file.name.slice(0, 80), saved });
+    });
+    $('personaResetBtn').addEventListener('click', () => { storeClear(); usePersona(SparkyPersonality.DEFAULT, { key:'personaResetDone' }); });
+    (function restorePersona(){
+      const saved = storeGet();
+      if (!saved) return;
+      const r = SparkyPersonality.parse(saved);    // re-validated on every load
+      if (r.ok){ state.persona = r.persona; talk.personaStatus = { key:'personaRestored' }; }
+      else storeClear();
+    })();
 
     applyLanguage();
     loadScenario();
