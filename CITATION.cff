@@ -30,7 +30,7 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.22985533"
     description: "Version DOI for v0.1.0 (Zenodo; earlier specification-only snapshot)"
-version: "0.4.1"
+version: "0.5.0"
 date-released: "2026-10-06"
 abstract: >-
   Reference implementation of the OES-512 layout: 512 channels as 16 blocks of
@@ -43,7 +43,12 @@ abstract: >-
   adds "Talk to Sparky", an offline rule-based voice and text assistant in
   the demo page that explains the on-screen analysis in English and French
   (teaching demo, not a medical device). Version 0.4.1 is a packaging fix
-  with the same code and demo as 0.4.0. The
+  with the same code and demo as 0.4.0. Version 0.5.0 adds uploadable
+  personalities for Talk to Sparky, with a default empathetic AI beaver
+  persona (Fredericton Holograms): JSON personality files change the name,
+  brand line, greeting, tone, tu/vous, empathy openers and voice settings,
+  while the medical-safety reply, every number and every alert or
+  missing-data fact stay locked. The
   per-block residual contract is defined in oes32-residual (ADR-001). Benchmark
   results are SYNTHETIC; the regimes are far apart, so perfect scores show they
   are easy to separate, not that the method is operational. Operational, field
@@ -56,4 +61,7 @@ keywords:
   - synthetic benchmark
   - educational demo
   - voice assistant
+  - personality
+  - empathetic avatar
+  - voice
   - anomaly detection

@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-06
+
+Sparky, the empathetic AI beaver: uploadable personalities for Talk to Sparky. The scoring core is unchanged.
+
 ### Added
 - Demo page version 0.5.0: "Talk to Sparky" personalities. The default persona is **Sparky, the empathetic AI beaver** for Fredericton Holograms, with a brand line linking to https://frederictonholograms.com (new tab, `rel="noopener noreferrer"`). It uses empathy openers ("I hear you." / « Ça se comprend. ») when the person sounds worried or when alerts or missing data are on screen, and occasional light catchphrases (never on safety or alert replies).
 - **Load personality** (`.json`) and **Reset to default** controls in the talk panel, with strict validation (64 KB max, known fields only, length limits, text only, https-only brand URL, no minimising phrases), clear EN/FR error messages, and optional persistence in `localStorage` (cleared by Reset). Speech rate, pitch and voice-name hints are applied to `speechSynthesis`. An `aiBrain` block is stored but never used (no network).
@@ -14,6 +18,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 - `CITATION.cff` and README list the v0.4.1 version DOI 10.5281/zenodo.23191559.
+- `CITATION.cff` version 0.5.0. `.zenodo.json` describes 0.5.0 and still sets no version, so Zenodo takes it from the tag `v0.5.0`.
 - Talk to Sparky brain: French "je suis inquiet…" is no longer treated as a medical question. It gets the factual answer with an empathy opener. "Dois-je m'inquiéter?" and other medical questions still get the fixed safety reply.
 - The brain test now allows exactly one URL in the page scripts: the default personality's brand link.
 
