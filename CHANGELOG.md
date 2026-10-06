@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- `CITATION.cff` and README list the v0.5.0 version DOI 10.5281/zenodo.23193502.
+
 ## [0.5.0] - 2026-10-06
 
 Sparky, the empathetic AI beaver: uploadable personalities for Talk to Sparky. The scoring core is unchanged.
