@@ -16,6 +16,9 @@ identifiers:
     value: "10.5281/zenodo.22985532"
     description: "Concept DOI (all versions, Zenodo)"
   - type: doi
+    value: "10.5281/zenodo.23191559"
+    description: "Version DOI for v0.4.1 (Zenodo; same code and demo as v0.4.0, clean archive)"
+  - type: doi
     value: "10.5281/zenodo.23191378"
     description: "Version DOI for v0.4.0 (Zenodo; adds Talk to Sparky, the offline voice avatar; superseded by v0.4.1 because its archive accidentally includes unrelated third-party package files)"
   - type: doi

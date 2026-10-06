@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- `CITATION.cff` and README list the v0.4.1 version DOI 10.5281/zenodo.23191559.
+
 ## [0.4.1] - 2026-10-06
 
 Packaging fix: removes 16 third-party package files accidentally included in the v0.4.0 archive; no code or demo changes. The demo page stays at version 0.4.0. This release supersedes v0.4.0.
