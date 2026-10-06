@@ -16,6 +16,9 @@ identifiers:
     value: "10.5281/zenodo.22985532"
     description: "Concept DOI (all versions, Zenodo)"
   - type: doi
+    value: "10.5281/zenodo.23186521"
+    description: "Version DOI for v0.3.0 (Zenodo; adds the educational Sparky demo)"
+  - type: doi
     value: "10.5281/zenodo.23002190"
     description: "Version DOI for v0.2.0 (Zenodo)"
   - type: doi

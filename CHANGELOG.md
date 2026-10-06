@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- `CITATION.cff` and README list the v0.3.0 version DOI 10.5281/zenodo.23186521.
+
 ## [0.3.0] - 2026-10-06
 
 ### Added
