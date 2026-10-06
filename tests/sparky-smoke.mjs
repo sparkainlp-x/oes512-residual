@@ -90,7 +90,8 @@ window.addEventListener('load', async () => {
       $('personaStatus').textContent = '';
       $('personaFile').files = dt.files;
       $('personaFile').dispatchEvent(new Event('change'));
-      for (let i = 0; i < 400 && !$('personaStatus').textContent; i++) { await file.text(); await wait(0); }
+      for (let i = 0; i < 400 && $('personaFile').files.length; i++) { await file.text(); await wait(0); }
+      if ($('personaFile').files.length) S.errors.push('test harness: file input not cleared after loading ' + name);
       if (!$('personaStatus').textContent) S.errors.push('test harness: no status after loading ' + name);
     };
     const store = () => { try { return localStorage.getItem('sparky.personality.v1'); } catch (e) { return 'unavailable'; } };
