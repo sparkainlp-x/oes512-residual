@@ -32,3 +32,16 @@ jobs:
         run: python -m pytest -v
       - name: Run seed-42 benchmark
         run: python oes512_complete.py
+
+  sparky-demo:
+    name: Sparky demo self-test (Node 20)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+      - name: Run demo self-test
+        run: node tests/sparky-demo.test.mjs

@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spark OES-512 Demo</title>
+  <meta name="description" content="Independent Spark AI NLP prototype for explainable 512-channel biosignal monitoring with a Canadian beaver avatar." />
+  <style>
+    :root {
+      --bg: #171614;
+      --surface: #1c1b19;
+      --surface-2: #22211f;
+      --border: #393836;
+      --text: #e8e3db;
+      --muted: #aaa39a;
+      --primary: #4f98a3;
+      --primary-2: #01696f;
+      --success: #6daa45;
+      --warn: #fdab43;
+      --danger: #dd6974;
+      --card: rgba(255,255,255,.03);
+      --shadow: 0 12px 30px rgba(0,0,0,.28);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: radial-gradient(circle at top, rgba(79,152,163,.18), transparent 35%), var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    .hero {
+      display: grid; grid-template-columns: 320px 1fr; gap: 28px; align-items: center;
+      padding: 28px; background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+      border: 1px solid var(--border); border-radius: 28px; box-shadow: var(--shadow);
+    }
+    .avatar {
+      background: linear-gradient(180deg, #302b24, #201d1a);
+      border: 1px solid var(--border); border-radius: 24px; padding: 18px;
+    }
+    .badge { display:inline-block; padding:6px 10px; border-radius:999px; background:rgba(79,152,163,.15); color:#9fd8e1; font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+    h1 { font-size: clamp(32px, 5vw, 64px); line-height: 1; margin: 14px 0; }
+    p.lead { font-size: 18px; color: var(--muted); max-width: 70ch; }
+    .cta { display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; }
+    button, .btn {
+      border: 0; border-radius: 14px; padding: 12px 16px; cursor: pointer; font-weight: 700;
+      background: var(--primary); color: #0b1718;
+    }
+    .btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .grid { display:grid; grid-template-columns: 1.2fr .8fr; gap: 24px; margin-top: 24px; }
+    .panel {
+      background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; box-shadow: var(--shadow);
+    }
+    .controls { display:grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap:12px; margin-bottom:20px; }
+    .controls > * { min-width: 0; }
+    label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.06em; }
+    select, input[type="range"], input[type="file"] {
+      width:100%; background: var(--surface-2); color: var(--text); border:1px solid var(--border); border-radius:12px; padding:10px;
+    }
+    .metrics { display:grid; grid-template-columns: minmax(0,1.35fr) repeat(4,minmax(0,1fr)); gap:12px; margin: 16px 0 20px; }
+    .metric { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 14px; }
+    .metric .k { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+    .metric .v { font-size: 28px; font-weight: 800; margin-top: 6px; }
+    #alertState { font-size: 17px; line-height: 1.25; overflow-wrap: break-word; }
+    .metric .v.syn { font-size: 15px; word-break: break-all; font-family: ui-monospace, monospace; }
+    .heatmap { display:grid; grid-template-columns: repeat(32, minmax(0,1fr)); gap:4px; }
+    .cell { aspect-ratio:1; border-radius:6px; border:1px solid rgba(255,255,255,.05); }
+    .legend { display:flex; justify-content:space-between; gap:10px; color:var(--muted); font-size:12px; margin:12px 0 6px; }
+    .blocklist { display:grid; grid-template-columns: repeat(2,1fr); gap:10px; }
+    .block {
+      border:1px solid var(--border); border-radius:16px; padding:12px; background: var(--surface);
+    }
+    .block strong { display:block; margin-bottom:6px; }
+    .block .score { margin-top:8px; font-size:22px; font-weight:800; color:#bde79e; }
+    .block.state-alert .score { color:#ffb3bc; }
+    .block.state-missing { border-style:dashed; border-color:#8a7590; }
+    .block.state-missing .score { color:#cdb4f0; }
+    .block .parity { opacity:.8; }
+    .parity-row { display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin:-6px 0 6px; }
+    .parity-row label.check { display:flex; gap:8px; align-items:center; text-transform:none; letter-spacing:0; font-size:13px; margin:0; color:var(--text); }
+    #parityHelp { text-decoration: underline dotted; cursor: help; }
+    .swatch { display:inline-block; width:10px; height:10px; border-radius:3px; background:#6f5e72; vertical-align:middle; }
+    .speech {
+      min-height: 140px; background: linear-gradient(180deg, rgba(79,152,163,.12), rgba(79,152,163,.04));
+      border: 1px solid rgba(79,152,163,.25); border-radius: 18px; padding: 16px;
+    }
+    .small { color: var(--muted); font-size: 13px; }
+    .footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
+    .danger { color: #ffb3bc; }
+    .success { color: #bde79e; }
+    .missing { color: #cdb4f0; }
+    @media (max-width: 980px) {
+      .hero, .grid { grid-template-columns: 1fr; }
+      .controls, .metrics, .blocklist { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .wrap { padding: 14px; }
+      .controls, .metrics, .blocklist { grid-template-columns: 1fr; }
+      .heatmap { grid-template-columns: repeat(16, minmax(0,1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="avatar" data-i18n-aria="avatarAria" aria-label="Sparky beaver avatar illustration">
+        <svg viewBox="0 0 320 320" role="img" data-i18n-aria="avatarSvgAria" aria-label="Canadian beaver in a red hockey jersey" width="100%" height="100%">
+          <rect x="0" y="0" width="320" height="320" rx="26" fill="#191614"/>
+          <circle cx="160" cy="122" r="82" fill="#6b4b34"/>
+          <ellipse cx="116" cy="72" rx="32" ry="38" fill="#7d583e"/>
+          <ellipse cx="204" cy="72" rx="32" ry="38" fill="#7d583e"/>
+          <ellipse cx="116" cy="74" rx="16" ry="20" fill="#d9b48f" opacity=".55"/>
+          <ellipse cx="204" cy="74" rx="16" ry="20" fill="#d9b48f" opacity=".55"/>
+          <ellipse cx="160" cy="148" rx="54" ry="44" fill="#d6b18f"/>
+          <circle cx="132" cy="120" r="10" fill="#111"/>
+          <circle cx="188" cy="120" r="10" fill="#111"/>
+          <ellipse cx="160" cy="140" rx="12" ry="9" fill="#2a2019"/>
+          <rect x="144" y="158" width="14" height="22" rx="3" fill="#fff5e8"/>
+          <rect x="162" y="158" width="14" height="22" rx="3" fill="#fff5e8"/>
+          <path d="M96 208c14-18 38-26 64-26s50 8 64 26v56H96z" fill="#c71f25"/>
+          <path d="M108 208h104v56H108z" fill="#d9272d"/>
+          <path d="M136 218h48v48h-48z" fill="#fff"/>
+          <path d="M160 228l8 14 16 2-12 10 4 16-16-8-16 8 4-16-12-10 16-2z" fill="#c71f25"/>
+          <rect x="96" y="228" width="20" height="58" rx="10" fill="#f3f3f3"/>
+          <rect x="204" y="228" width="20" height="58" rx="10" fill="#f3f3f3"/>
+          <rect x="0" y="282" width="320" height="38" fill="#0f1112"/>
+          <text x="160" y="306" text-anchor="middle" fill="#9fd8e1" font-size="18" font-family="Inter, Arial, sans-serif">SPARKY</text>
+        </svg>
+      </div>
+      <div>
+        <span class="badge" data-i18n="badge">Spark AI NLP · Independent Demo</span>
+        <h1>Spark OES-512</h1>
+        <p class="lead" data-i18n="lead">An independent Spark AI NLP prototype for explainable 512-channel biosignal monitoring. The interface combines a Canadian beaver avatar, grouped channel visualization, transparent anomaly scoring, bilingual messaging, and mandatory human review.</p>
+        <div class="cta">
+          <button id="runBtn" data-i18n="run">Run analysis</button>
+          <button class="btn secondary" id="speakBtn" data-i18n="speak">Speak summary</button>
+          <button class="btn secondary" id="exportBtn" data-i18n="export">Export JSON</button>
+        </div>
+        <p class="footer" data-i18n="footer">Not a medical device. Uses synthetic or user-supplied non-clinical data only. Human review required for every alert.</p>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <div class="controls">
+          <div>
+            <label for="scenario" data-i18n="scenario">Scenario</label>
+            <select id="scenario">
+              <option value="baseline" data-i18n="scBaseline">Baseline stable pattern</option>
+              <option value="local" data-i18n="scLocal">Localized anomaly</option>
+              <option value="drift" data-i18n="scDrift">Progressive drift</option>
+              <option value="global" data-i18n="scGlobal">Global shock</option>
+              <option value="missing" data-i18n="scMissing">Missing data stress</option>
+            </select>
+          </div>
+          <div>
+            <label for="threshold" data-i18n="threshold">Alert threshold</label>
+            <input id="threshold" type="range" min="0.1" max="2.5" step="0.05" value="0.5" />
+            <div class="small"><span data-i18n="current">Current:</span> <span id="thVal">0.50</span></div>
+          </div>
+          <div>
+            <label for="lang" data-i18n="language">Language</label>
+            <select id="lang">
+              <option value="en">English</option>
+              <option value="fr" lang="fr">Français</option>
+            </select>
+          </div>
+          <div>
+            <label for="mode" data-i18n="empathy">Empathy mode</label>
+            <select id="mode">
+              <option value="calm" data-i18n="mCalm">Calm</option>
+              <option value="attentive" data-i18n="mAttentive">Attentive</option>
+              <option value="protective" data-i18n="mProtective">Protective</option>
+            </select>
+          </div>
+          <div>
+            <label for="csvFile" data-i18n="csvLabel">Load 512-value CSV</label>
+            <input id="csvFile" type="file" accept=".csv,text/csv" />
+          </div>
+        </div>
+
+        <div class="parity-row">
+          <label class="check"><input type="checkbox" id="parityAlerts" /> <span data-i18n="parityToggle">Let parity asymmetry (experimental) trigger alerts</span></label>
+          <span class="small" id="parityHelp" data-i18n="parityHelp" data-i18n-title="parityTooltip">What is this?</span>
+        </div>
+
+        <div class="metrics">
+          <div class="metric"><div class="k" data-i18n="mAlert">Alert state</div><div class="v" id="alertState">Nominal</div></div>
+          <div class="metric"><div class="k" data-i18n="mTriggered">Triggered blocks</div><div class="v" id="blockCount">0</div></div>
+          <div class="metric"><div class="k" data-i18n="mMissing">Missing-data blocks</div><div class="v" id="missingCount">0</div></div>
+          <div class="metric"><div class="k" data-i18n="mPeak">Peak score</div><div class="v" id="peakScore">0.00</div></div>
+          <div class="metric"><div class="k" data-i18n="mSyndrome">Syndrome bits</div><div class="v syn" id="syndrome">0000000000000000</div></div>
+        </div>
+
+        <div class="legend"><span data-i18n="legendLow">Low deviation</span><span><span class="swatch"></span> <span data-i18n="legendMissing">Missing</span></span><span data-i18n="legendHigh">High deviation</span></div>
+        <div id="heatmap" class="heatmap" data-i18n-aria="heatmapAria" aria-label="512-channel heatmap"></div>
+        <p class="small" id="sourceNote" style="margin-top:10px;"></p>
+      </div>
+
+      <div class="panel">
+        <h2 data-i18n="explanation">Explanation</h2>
+        <div id="speech" class="speech" aria-live="polite">Sparky is ready. Run an analysis to generate a plain-language summary.</div>
+        <h3 style="margin:18px 0 10px;" data-i18n="overview">Block overview</h3>
+        <div id="blocklist" class="blocklist"></div>
+        <p class="small" style="margin-top:14px;" id="method"></p>
+        <p class="small" id="parityText"></p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ===== BEGIN OES CORE (pure functions, no DOM; extracted by spark-oes512-demo-tests.mjs) =====
+    const OES = (() => {
+      const CHANNELS = 512, BLOCK = 32, NBLOCKS = 16;
+      const DEFAULT_THRESHOLD = 0.50;
+      const PARITY_THRESHOLD = 0.80;   // experimental; only used when parity alerts are enabled
+      const PARITY_MIN_MAG = 0.10;     // parity alerts need mean|r| >= this, so pure noise cannot trigger them
+      const EPS = 1e-9;
+      const REF_FRAMES = 32, REF_SEED0 = 1001;
+
+      function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;}}
+      function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+      function baseSignal(seed=7){
+        const rand = mulberry32(seed);
+        return Array.from({length:CHANNELS},(_,i)=>{
+          const band = Math.floor(i/BLOCK);
+          const phase = (i%BLOCK)/BLOCK;
+          return 0.18*Math.sin(phase*6.28)+0.06*Math.cos(band*0.7)+ (rand()-0.5)*0.08;
+        });
+      }
+      function scenarioValues(kind){
+        const v = baseSignal(kind.length * 97 + 11);
+        if (kind==='local') for(let i=160;i<192;i++) v[i]+= 1.4 + ((i%7)/10);
+        if (kind==='drift') for(let i=256;i<512;i++) v[i]+= ((i-256)/256)*1.15;
+        if (kind==='global') for(let i=0;i<512;i++) v[i]+= 0.9 + 0.35*Math.sin(i/13);
+        if (kind==='missing') for(let i=320;i<352;i++) v[i]= NaN;
+        return v;
+      }
+
+      // Stable reference band: per-channel mean and standard deviation of REF_FRAMES
+      // baseline-pattern frames generated with fixed seeds 1001..1032 (none of them is the
+      // seed used by any scenario, so the baseline scenario is not scored against itself).
+      function buildReference(frames=REF_FRAMES, seed0=REF_SEED0){
+        const mean = new Array(CHANNELS).fill(0), sq = new Array(CHANNELS).fill(0);
+        for (let f=0; f<frames; f++){
+          const v = baseSignal(seed0+f);
+          for (let i=0;i<CHANNELS;i++){ mean[i]+=v[i]; sq[i]+=v[i]*v[i]; }
+        }
+        for (let i=0;i<CHANNELS;i++){ mean[i]/=frames; sq[i]=Math.sqrt(Math.max(0, sq[i]/frames - mean[i]*mean[i])); }
+        return { mean, sd: sq, frames, seeds: `${seed0}-${seed0+frames-1}` };
+      }
+      let _ref = null;
+      function reference(){ return _ref || (_ref = buildReference()); }
+
+      function residuals(values, ref=reference()){
+        return values.map((v,i)=> Number.isFinite(v) ? v - ref.mean[i] : NaN);
+      }
+
+      // Experimental parity asymmetry (sign-flip parity): A = |mean(r)| / (mean(|r|) + eps).
+      // A is 0 when the block is unchanged in distribution under r -> -r (symmetric, zero-mean
+      // residuals) and 1 when every residual has the same sign (a uniform shift).
+      function parityAsymmetry(res){
+        const r = res.filter(Number.isFinite);
+        if (!r.length) return null;
+        const m = r.reduce((s,v)=>s+v,0)/r.length;
+        const ma = r.reduce((s,v)=>s+Math.abs(v),0)/r.length;
+        return Math.abs(m)/(ma+EPS);
+      }
+
+      // Main score on residuals, finite channels only: 0.45*peak + 0.35*RMS + 0.20*mean|r|.
+      function scoreBlock(res){
+        const r = res.filter(Number.isFinite);
+        const missing = res.length - r.length;
+        if (!r.length) return { score:null, peak:null, rms:null, meanAbs:null, parity:null, finite:0, missing };
+        const peak = Math.max(...r.map(Math.abs));
+        const rms = Math.sqrt(r.reduce((s,v)=>s+v*v,0)/r.length);
+        const meanAbs = r.reduce((s,v)=>s+Math.abs(v),0)/r.length;
+        return { score: peak*0.45 + rms*0.35 + meanAbs*0.2, peak, rms, meanAbs, parity: parityAsymmetry(r), finite:r.length, missing };
+      }
+
+      function blockId(i){ return `B${String(i+1).padStart(2,'0')}`; }
+
+      function analyzeValues(values, opts={}){
+        const threshold = opts.threshold ?? DEFAULT_THRESHOLD;
+        const parityAlerts = !!opts.parityAlerts;
+        if (!Array.isArray(values) || values.length !== CHANNELS) throw new Error('expected 512 values');
+        const res = residuals(values);
+        const blocks = [];
+        for (let b=0;b<NBLOCKS;b++){
+          const s = scoreBlock(res.slice(b*BLOCK,(b+1)*BLOCK));
+          const aboveMain = s.score !== null && s.score >= threshold;
+          const aboveParity = parityAlerts && s.parity !== null && s.meanAbs >= PARITY_MIN_MAG && s.parity >= PARITY_THRESHOLD;
+          let st = 'nominal', reasons = [];
+          if (s.missing > 0) st = 'missing';                       // missing data is its own state, never an anomaly
+          else if (aboveMain || aboveParity){
+            st = 'alert';
+            if (aboveMain) reasons.push('score');
+            if (aboveParity) reasons.push('parity');
+          }
+          blocks.push({ index:b, id:blockId(b), channels:[b*BLOCK+1,(b+1)*BLOCK], state:st, reasons,
+            score:s.score, peak:s.peak, rms:s.rms, meanAbs:s.meanAbs, parity:s.parity,
+            finiteChannels:s.finite, missingChannels:s.missing,
+            scoreOnAvailableAboveThreshold: s.missing>0 && aboveMain });
+        }
+        const flags = blocks.map(b=> b.state==='alert' ? 1 : 0);
+        const scored = blocks.filter(b=>b.score!==null);
+        const top = scored.length ? scored.reduce((a,b)=> b.score>a.score ? b : a) : null;
+        const alerts = blocks.filter(b=>b.state==='alert');
+        const topAlert = alerts.length ? alerts.reduce((a,b)=> (b.score??-1)>(a.score??-1) ? b : a) : null;
+        return { threshold, parityAlerts, blocks, flags, syndrome: flags.join(''), residuals: res,
+          alerts, missing: blocks.filter(b=>b.state==='missing'), top, topAlert };
+      }
+
+      // CSV: exactly 512 cells. Empty cells, NaN, NA and null mean "missing"; any other
+      // non-finite or non-numeric token is rejected.
+      function parseCsv512(text){
+        const tokens = [];
+        for (const line of String(text).split(/\r?\n/)){
+          if (!line.trim()) continue;
+          const cells = /[,;\t]/.test(line) ? line.split(/[,;\t]/) : line.trim().split(/\s+/);
+          if (cells.length > 1 && cells[cells.length-1].trim()==='') cells.pop();   // trailing delimiter
+          tokens.push(...cells.map(c=>c.trim()));
+        }
+        if (tokens.length !== CHANNELS) return { error:'count', count:tokens.length };
+        const values = [];
+        for (const tk of tokens){
+          if (tk==='' || /^(nan|na|null)$/i.test(tk)) { values.push(NaN); continue; }
+          if (!/^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(tk)) return { error:'token', token:tk };
+          const n = Number(tk);
+          if (!Number.isFinite(n)) return { error:'token', token:tk };
+          values.push(n);
+        }
+        if (values.every(v=>!Number.isFinite(v))) return { error:'allMissing' };
+        return { values };
+      }
+
+      function fmt(x, lang, d=2){
+        if (x===null || x===undefined || !Number.isFinite(x)) return '—';
+        const s = x.toFixed(d);
+        return lang==='fr' ? s.replace('.', ',') : s;
+      }
+      function list(ids, lang){
+        if (ids.length<=1) return ids.join('');
+        return ids.slice(0,-1).join(', ') + (lang==='fr' ? ' et ' : ' and ') + ids[ids.length-1];
+      }
+
+      const TONE = {
+        calm:       { en:'I am staying calm and transparent.', fr:'Je reste calme et transparent.' },
+        attentive:  { en:'I am paying close attention to this pattern.', fr:'Je porte une attention particulière à ce profil.' },
+        protective: { en:'I want to keep this review cautious and safe.', fr:'Je veux que cet examen reste prudent et sécuritaire.' }
+      };
+
+      const SUM = {
+        en: {
+          nominal: (t)=>`The 512-channel pattern stays below the current threshold (${t}). No block crosses the alert boundary.`,
+          alerts: (n, ids, t)=>`I detected ${n} ${n===1?'block':'blocks'} above the threshold (${t}): ${ids}.`,
+          strongest: (id, s)=>`The strongest deviation is in ${id}, with a score of ${s}.`,
+          parity: (ids)=>`The experimental parity asymmetry signal also triggered for ${ids}.`,
+          missing: (n, detail)=>`${n} ${n===1?'block has':'blocks have'} missing data and ${n===1?'was':'were'} not treated as ${n===1?'an anomaly':'anomalies'}: ${detail}.`,
+          missingDetail: (id, m)=>`${id} (${m} of 32 channels missing)`,
+          partial: (ids)=>`For ${ids}, the score on the available channels is above the threshold; check the data.`,
+          noneScored: 'No block could be scored because every channel is missing.',
+          csv: 'These values come from a loaded CSV file and were compared with the built-in synthetic reference; large residuals everywhere usually mean the file does not match that reference.',
+          closeAlert: 'This output is only an explainable screening view and must be reviewed by a human before any interpretation.',
+          closeNominal: 'Human review is still recommended before acting on any result.'
+        },
+        fr: {
+          nominal: (t)=>`Le profil des 512 canaux reste sous le seuil actuel (${t}). Aucun bloc ne franchit la limite d’alerte.`,
+          alerts: (n, ids, t)=>`J’ai détecté ${n} ${n===1?'bloc':'blocs'} au-dessus du seuil (${t})\u00a0: ${ids}.`,
+          strongest: (id, s)=>`L’écart le plus marqué se trouve dans ${id}, avec un score de ${s}.`,
+          parity: (ids)=>`Le signal expérimental d’asymétrie de parité s’est aussi déclenché pour ${ids}.`,
+          missing: (n, detail)=>`${n} ${n===1?'bloc comporte':'blocs comportent'} des données manquantes et ${n===1?'n’a pas été traité comme une anomalie':'n’ont pas été traités comme des anomalies'}\u00a0: ${detail}.`,
+          missingDetail: (id, m)=>`${id} (${m} canaux manquants sur 32)`,
+          partial: (ids)=>`Pour ${ids}, le score calculé sur les canaux disponibles dépasse le seuil; vérifiez les données.`,
+          noneScored: 'Aucun bloc n’a pu être évalué, car tous les canaux sont manquants.',
+          csv: 'Ces valeurs proviennent d’un fichier CSV chargé et ont été comparées à la référence synthétique intégrée; des résidus élevés partout signifient habituellement que le fichier ne correspond pas à cette référence.',
+          closeAlert: 'Ce résultat n’est qu’un aperçu de tri explicable; une personne doit l’examiner avant toute interprétation.',
+          closeNominal: 'Un examen humain reste recommandé avant d’agir sur un résultat.'
+        }
+      };
+
+      function makeSummary(result, lang='en', mode='calm', source='scenario'){
+        const L = SUM[lang] || SUM.en;
+        const out = [ (TONE[mode]||TONE.calm)[lang==='fr'?'fr':'en'] ];
+        const t = fmt(result.threshold, lang);
+        if (!result.top) out.push(L.noneScored);
+        else if (!result.alerts.length) out.push(L.nominal(t));
+        else {
+          out.push(L.alerts(result.alerts.length, list(result.alerts.map(b=>b.id), lang), t));
+          const ta = result.topAlert;
+          if (ta && ta.score!==null) out.push(L.strongest(ta.id, fmt(ta.score, lang)));
+          const par = result.alerts.filter(b=>b.reasons.includes('parity'));
+          if (par.length) out.push(L.parity(list(par.map(b=>b.id), lang)));
+        }
+        if (result.missing.length){
+          out.push(L.missing(result.missing.length, result.missing.map(b=>L.missingDetail(b.id, b.missingChannels)).join(', ')));
+          const partial = result.missing.filter(b=>b.scoreOnAvailableAboveThreshold);
+          if (partial.length) out.push(L.partial(list(partial.map(b=>b.id), lang)));
+        }
+        if (source==='csv') out.push(L.csv);
+        out.push(result.alerts.length || result.missing.length ? L.closeAlert : L.closeNominal);
+        return out.join(' ');
+      }
+
+      return { CHANNELS, BLOCK, NBLOCKS, DEFAULT_THRESHOLD, PARITY_THRESHOLD, PARITY_MIN_MAG, REF_FRAMES, REF_SEED0,
+        mulberry32, clamp, baseSignal, scenarioValues, buildReference, reference, residuals,
+        parityAsymmetry, scoreBlock, blockId, analyzeValues, parseCsv512, fmt, makeSummary, TONE, SUM };
+    })();
+    // ===== END OES CORE =====
+
+    const I18N = {
+      en: {
+        avatarAria:'Sparky beaver avatar illustration', avatarSvgAria:'Canadian beaver in a red hockey jersey',
+        badge:'Spark AI NLP · Independent Demo',
+        lead:'An independent Spark AI NLP prototype for explainable 512-channel biosignal monitoring. The interface combines a Canadian beaver avatar, grouped channel visualization, transparent anomaly scoring, bilingual messaging, and mandatory human review.',
+        run:'Run analysis', speak:'Speak summary', export:'Export JSON',
+        footer:'Not a medical device. Uses synthetic or user-supplied non-clinical data only. Human review required for every alert.',
+        scenario:'Scenario', scBaseline:'Baseline stable pattern', scLocal:'Localized anomaly', scDrift:'Progressive drift', scGlobal:'Global shock', scMissing:'Missing data stress',
+        threshold:'Alert threshold', current:'Current:', language:'Language', empathy:'Empathy mode',
+        mCalm:'Calm', mAttentive:'Attentive', mProtective:'Protective', csvLabel:'Load 512-value CSV',
+        parityToggle:'Let parity asymmetry (experimental) trigger alerts', parityHelp:'What is this?',
+        parityTooltip:'Sign-flip parity asymmetry A = |mean(r)| / (mean(|r|) + ε) over the 32 residuals of a block. A ≈ 0 when the residuals look the same after r → −r (symmetric, zero-mean noise); A = 1 when all residuals share one sign (a uniform shift). Exploratory and not validated.',
+        mAlert:'Alert state', mTriggered:'Triggered blocks', mMissing:'Missing-data blocks', mPeak:'Peak score', mSyndrome:'Syndrome bits',
+        stNominal:'Nominal', stReview:'Review required', stIncomplete:'Data incomplete',
+        legendLow:'Low deviation', legendMissing:'Missing', legendHigh:'High deviation', heatmapAria:'512-channel residual heatmap',
+        explanation:'Explanation', overview:'Block overview',
+        ready:'Sparky is ready. Run an analysis to generate a plain-language summary.',
+        block:'Block', channels:'Channels', above:'Above threshold', within:'Within range', aboveParity:'Parity asymmetry (experimental) above its limit',
+        missingState:(m)=>`Missing data (${m}/32 channels)`, parityLine:'Parity asymmetry (exp.):',
+        channelTip:(i,v,r,ref,sd)=>`Channel ${i}: value ${v} · residual ${r} · reference ${ref} ± ${sd}`, missingWord:'missing',
+        method:(f,s,t)=>`Each of the 16 blocks contains 32 channels. Each channel is compared with a stable reference band: the per-channel mean (± standard deviation) of ${f} synthetic baseline frames generated with fixed seeds ${s}. Scores combine peak, RMS and mean absolute residual (value − reference): 0.45·peak + 0.35·RMS + 0.20·mean. Missing channels are left out of the score; a block with missing data is shown separately and is never counted as an anomaly. The default threshold of ${t} was chosen by hand so that the demo scenarios read sensibly (baseline nominal; localized, drift and global scenarios flagged). It is not tuned or validated for any real signal. Relationship to oes512-residual: the block formula and the 0.50 default match the repository’s reference latch (oes512_complete.py), but this page is a separate educational demo, not the normative reference. It computes its own residuals against the built-in synthetic reference band, uses its own scenarios instead of the seed-42 benchmark, and adds missing-data handling and an experimental parity signal that are not part of the reference. Evidence: SYNTHETIC; operational and medical performance UNRUN (not claimed).`,
+        parityText:(t,m)=>`Parity asymmetry (experimental) is shown next to the main score and does not replace it. It borrows the idea of physical parity, where P sends momentum p → −p, leaves spin S unchanged and therefore flips helicity: here the transform is r → −r on a block’s residuals, and A measures how far the block is from being symmetric under it (0 = symmetric zero-mean noise, 1 = every residual has the same sign). It is an analogy and an exploratory signal, not a validated detector. By default it never triggers alerts; if you enable the checkbox, a block is also flagged when A ≥ ${t} and mean|r| ≥ ${m}.`,
+        srcScenario:(name)=>`Source: built-in synthetic scenario “${name}”.`,
+        srcCsv:(name)=>`Source: CSV file “${name}”, compared with the same built-in synthetic reference. The “Run analysis” button reloads the selected scenario.`,
+        csvCount:(n)=>`Please provide exactly 512 values (found ${n}). Empty cells, NaN, NA or null are accepted as missing.`,
+        csvToken:(tk)=>`“${tk}” is not a finite number. Empty cells, NaN, NA or null are accepted as missing.`,
+        csvAllMissing:'Every value in this file is missing.', noSummary:'No summary available.', noSpeech:'Speech synthesis is not available in this browser.'
+      },
+      fr: {
+        avatarAria:'Illustration de l’avatar Sparky, un castor', avatarSvgAria:'Castor canadien portant un chandail de hockey rouge',
+        badge:'Spark AI NLP · Démo indépendante',
+        lead:'Un prototype indépendant de Spark AI NLP pour la surveillance explicable de biosignaux sur 512 canaux. L’interface réunit un avatar de castor canadien, une visualisation des canaux par groupes, un score d’anomalie transparent, des messages bilingues et un examen humain obligatoire.',
+        run:'Lancer l’analyse', speak:'Lire le résumé', export:'Exporter en JSON',
+        footer:'Ceci n’est pas un instrument médical. Utilise uniquement des données synthétiques ou des données non cliniques fournies par l’utilisateur. Un examen humain est requis pour chaque alerte.',
+        scenario:'Scénario', scBaseline:'Profil de référence stable', scLocal:'Anomalie localisée', scDrift:'Dérive progressive', scGlobal:'Choc global', scMissing:'Test de données manquantes',
+        threshold:'Seuil d’alerte', current:'Actuel\u00a0:', language:'Langue', empathy:'Mode d’empathie',
+        mCalm:'Calme', mAttentive:'Attentif', mProtective:'Protecteur', csvLabel:'Charger un CSV de 512 valeurs',
+        parityToggle:'Permettre à l’asymétrie de parité (expérimentale) de déclencher des alertes', parityHelp:'De quoi s’agit-il?',
+        parityTooltip:'Asymétrie de parité par inversion de signe A = |moyenne(r)| / (moyenne(|r|) + ε) sur les 32 résidus d’un bloc. A ≈ 0 lorsque les résidus restent semblables après r → −r (bruit symétrique de moyenne nulle); A = 1 lorsque tous les résidus ont le même signe (décalage uniforme). Exploratoire et non validé.',
+        mAlert:'État d’alerte', mTriggered:'Blocs déclenchés', mMissing:'Blocs incomplets', mPeak:'Score maximal', mSyndrome:'Bits de syndrome',
+        stNominal:'Nominal', stReview:'Examen requis', stIncomplete:'Données incomplètes',
+        legendLow:'Faible écart', legendMissing:'Manquant', legendHigh:'Écart élevé', heatmapAria:'Carte thermique des résidus sur 512 canaux',
+        explanation:'Explication', overview:'Aperçu des blocs',
+        ready:'Sparky est prêt. Lancez une analyse pour obtenir un résumé en langage clair.',
+        block:'Bloc', channels:'Canaux', above:'Au-dessus du seuil', within:'Dans la plage', aboveParity:'Asymétrie de parité (expérimentale) au-dessus de sa limite',
+        missingState:(m)=>`Données manquantes (${m}/32 canaux)`, parityLine:'Asymétrie de parité (exp.)\u00a0:',
+        channelTip:(i,v,r,ref,sd)=>`Canal ${i}\u00a0: valeur ${v} · résidu ${r} · référence ${ref} ± ${sd}`, missingWord:'manquant',
+        method:(f,s,t)=>`Chacun des 16 blocs contient 32 canaux. Chaque canal est comparé à une bande de référence stable\u00a0: la moyenne par canal (± écart type) de ${f} trames de référence synthétiques générées avec les germes fixes ${s}. Le score combine le pic, la valeur efficace (RMS) et la moyenne absolue du résidu (valeur − référence)\u00a0: 0,45·pic + 0,35·RMS + 0,20·moyenne. Les canaux manquants sont exclus du score; un bloc avec des données manquantes est affiché à part et n’est jamais compté comme une anomalie. Le seuil par défaut de ${t} a été choisi à la main pour que les scénarios de démonstration se lisent de façon sensée (référence nominale; scénarios localisé, de dérive et global signalés). Il n’est ni ajusté ni validé pour un signal réel. Lien avec oes512-residual : la formule par bloc et le seuil de 0,50 correspondent au verrou de référence du dépôt (oes512_complete.py), mais cette page est une démonstration éducative distincte, et non la référence normative. Elle calcule ses propres résidus par rapport à la bande de référence synthétique intégrée, utilise ses propres scénarios plutôt que le banc d’essai à germe 42, et ajoute une gestion des données manquantes et un signal de parité expérimental qui ne font pas partie de la référence. Preuves : SYNTHÉTIQUES; performance opérationnelle et médicale NON ÉVALUÉE (aucune prétention).`,
+        parityText:(t,m)=>`L’asymétrie de parité (expérimentale) s’affiche à côté du score principal et ne le remplace pas. Elle reprend l’idée de la parité en physique, où P envoie la quantité de mouvement p → −p, laisse le spin S inchangé et inverse donc l’hélicité\u00a0: ici, la transformation est r → −r sur les résidus d’un bloc, et A mesure à quel point le bloc s’éloigne de la symétrie sous cette transformation (0 = bruit symétrique de moyenne nulle, 1 = tous les résidus ont le même signe). C’est une analogie et un signal exploratoire, pas un détecteur validé. Par défaut, elle ne déclenche jamais d’alerte; si vous cochez la case, un bloc est aussi signalé lorsque A ≥ ${t} et moyenne|r| ≥ ${m}.`,
+        srcScenario:(name)=>`Source\u00a0: scénario synthétique intégré «\u00a0${name}\u00a0».`,
+        srcCsv:(name)=>`Source\u00a0: fichier CSV «\u00a0${name}\u00a0», comparé à la même référence synthétique intégrée. Le bouton «\u00a0Lancer l’analyse\u00a0» recharge le scénario sélectionné.`,
+        csvCount:(n)=>`Veuillez fournir exactement 512 valeurs (${n} trouvées). Les cellules vides, NaN, NA ou null sont acceptées comme valeurs manquantes.`,
+        csvToken:(tk)=>`«\u00a0${tk}\u00a0» n’est pas un nombre fini. Les cellules vides, NaN, NA ou null sont acceptées comme valeurs manquantes.`,
+        csvAllMissing:'Toutes les valeurs de ce fichier sont manquantes.', noSummary:'Aucun résumé disponible.', noSpeech:'La synthèse vocale n’est pas offerte dans ce navigateur.'
+      }
+    };
+
+    const state = {
+      values: new Array(512).fill(0),
+      result: null,
+      threshold: OES.DEFAULT_THRESHOLD,
+      parityAlerts: false,
+      scenario: 'baseline',
+      source: 'scenario',
+      csvName: '',
+      lang: 'en',
+      mode: 'calm',
+      lastSummary: ''
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const heatmap = $('heatmap'), blocklist = $('blocklist'), speech = $('speech');
+    const T = (k) => I18N[state.lang][k];
+
+    function applyLanguage(){
+      document.documentElement.lang = state.lang === 'fr' ? 'fr-CA' : 'en';
+      document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n); });
+      document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', T(el.dataset.i18nAria)));
+      document.querySelectorAll('[data-i18n-title]').forEach(el => el.title = T(el.dataset.i18nTitle));
+      $('thVal').textContent = OES.fmt(state.threshold, state.lang);
+      $('method').textContent = T('method')(OES.REF_FRAMES, `${OES.REF_SEED0}–${OES.REF_SEED0+OES.REF_FRAMES-1}`, OES.fmt(OES.DEFAULT_THRESHOLD, state.lang));
+      $('parityText').textContent = T('parityText')(OES.fmt(OES.PARITY_THRESHOLD, state.lang), OES.fmt(OES.PARITY_MIN_MAG, state.lang));
+    }
+
+    function loadScenario(){
+      state.values = OES.scenarioValues(state.scenario);
+      state.source = 'scenario';
+      state.csvName = '';
+      analyze();
+    }
+
+    function analyze(){
+      state.result = OES.analyzeValues(state.values, { threshold: state.threshold, parityAlerts: state.parityAlerts });
+      render();
+    }
+
+    function colorFor(r){
+      if (!Number.isFinite(r)) return '#6f5e72';
+      const mag = OES.clamp(Math.abs(r),0,2.4)/2.4;
+      const hue = 178 - mag*178;
+      const light = 26 + mag*34;
+      return `hsl(${hue} 68% ${light}%)`;
+    }
+
+    function render(){
+      const R = state.result, lang = state.lang, ref = OES.reference();
+      heatmap.innerHTML = '';
+      state.values.forEach((v,idx)=>{
+        const d = document.createElement('div');
+        d.className = 'cell';
+        const r = R.residuals[idx];
+        d.style.background = colorFor(r);
+        d.title = Number.isFinite(v)
+          ? T('channelTip')(idx+1, OES.fmt(v,lang,3), OES.fmt(r,lang,3), OES.fmt(ref.mean[idx],lang,3), OES.fmt(ref.sd[idx],lang,3))
+          : T('channelTip')(idx+1, T('missingWord'), '—', OES.fmt(ref.mean[idx],lang,3), OES.fmt(ref.sd[idx],lang,3));
+        heatmap.appendChild(d);
+      });
+
+      blocklist.innerHTML = '';
+      R.blocks.forEach(b=>{
+        const div = document.createElement('div');
+        div.className = 'block state-' + b.state;
+        const status = b.state === 'missing' ? T('missingState')(b.missingChannels)
+          : b.state === 'alert' ? (b.reasons.includes('score') ? T('above') : T('aboveParity'))
+          : T('within');
+        div.innerHTML = `<strong>${T('block')} ${String(b.index+1).padStart(2,'0')} (${b.id})</strong>
+          <div class="small">${T('channels')} ${b.channels[0]}-${b.channels[1]}</div>
+          <div class="score">${OES.fmt(b.score, lang)}</div>
+          <div class="small">${status}</div>
+          <div class="small parity">${T('parityLine')} ${OES.fmt(b.parity, lang)}</div>`;
+        blocklist.appendChild(div);
+      });
+
+      const alertState = $('alertState');
+      if (R.alerts.length){ alertState.textContent = T('stReview'); alertState.className = 'v danger'; }
+      else if (R.missing.length){ alertState.textContent = T('stIncomplete'); alertState.className = 'v missing'; }
+      else { alertState.textContent = T('stNominal'); alertState.className = 'v success'; }
+      $('blockCount').textContent = String(R.alerts.length);
+      $('missingCount').textContent = String(R.missing.length);
+      $('peakScore').textContent = R.top ? OES.fmt(R.top.score, lang) : '—';
+      $('syndrome').textContent = R.syndrome;
+      const scName = T({baseline:'scBaseline',local:'scLocal',drift:'scDrift',global:'scGlobal',missing:'scMissing'}[state.scenario]);
+      $('sourceNote').textContent = state.source === 'csv' ? T('srcCsv')(state.csvName) : T('srcScenario')(scName);
+      state.lastSummary = OES.makeSummary(R, lang, state.mode, state.source);
+      speech.textContent = state.lastSummary;
+    }
+
+    $('threshold').addEventListener('input', e => {
+      state.threshold = parseFloat(e.target.value);
+      $('thVal').textContent = OES.fmt(state.threshold, state.lang);
+      analyze();
+    });
+    $('parityAlerts').addEventListener('change', e => { state.parityAlerts = e.target.checked; analyze(); });
+    $('scenario').addEventListener('change', e => { state.scenario = e.target.value; loadScenario(); });
+    $('lang').addEventListener('change', e => { state.lang = e.target.value; applyLanguage(); render(); });
+    $('mode').addEventListener('change', e => { state.mode = e.target.value; render(); });
+    $('runBtn').addEventListener('click', loadScenario);
+    $('speakBtn').addEventListener('click', () => {
+      if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') { alert(T('noSpeech')); return; }
+      const utter = new SpeechSynthesisUtterance(state.lastSummary || T('noSummary'));
+      utter.lang = state.lang === 'fr' ? 'fr-CA' : 'en-CA';
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
+    });
+    $('exportBtn').addEventListener('click', () => {
+      const R = state.result, ref = OES.reference();
+      const payload = {
+        project: 'Spark OES-512 Demo',
+        generatedAt: new Date().toISOString(),
+        source: state.source === 'csv' ? { type: 'csv', file: state.csvName } : { type: 'scenario', scenario: state.scenario },
+        threshold: state.threshold,
+        language: state.lang,
+        empathyMode: state.mode,
+        scoring: {
+          residual: 'value - reference (per channel)',
+          reference: `per-channel mean (and SD) of ${ref.frames} synthetic baseline frames, seeds ${ref.seeds}`,
+          blockScore: '0.45*peak|r| + 0.35*RMS(r) + 0.20*mean|r| over finite channels only',
+          defaultThreshold: OES.DEFAULT_THRESHOLD,
+          missingData: 'blocks with any missing channel get state "missing" (not an anomaly); fully missing blocks have score null'
+        },
+        experimentalParity: {
+          definition: 'sign-flip parity asymmetry A = |mean(r)| / (mean|r| + 1e-9) per block; 0 = symmetric zero-mean, 1 = all residuals same sign',
+          status: 'exploratory analogy to physical parity; not validated',
+          alertsEnabled: state.parityAlerts,
+          alertRule: `A >= ${OES.PARITY_THRESHOLD} and mean|r| >= ${OES.PARITY_MIN_MAG} (only when alertsEnabled)`
+        },
+        syndrome: R.syndrome,
+        flags: R.flags,
+        counts: { alertBlocks: R.alerts.length, missingDataBlocks: R.missing.length },
+        blockScores: R.blocks.map(b => b.score),
+        blocks: R.blocks.map(b => ({ id: b.id, channels: b.channels, state: b.state, reasons: b.reasons, score: b.score,
+          parityAsymmetry: b.parity, missingChannels: b.missingChannels, finiteChannels: b.finiteChannels,
+          scoreOnAvailableAboveThreshold: b.scoreOnAvailableAboveThreshold })),
+        summary: state.lastSummary,
+        notice: 'Independent non-clinical prototype. Not a medical device. Human review required.'
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'spark-oes512-export.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    });
+    $('csvFile').addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const parsed = OES.parseCsv512(await file.text());
+      e.target.value = '';   // allow re-selecting the same file
+      if (parsed.error){
+        alert(parsed.error === 'count' ? T('csvCount')(parsed.count) : parsed.error === 'token' ? T('csvToken')(parsed.token) : T('csvAllMissing'));
+        return;
+      }
+      state.values = parsed.values;
+      state.source = 'csv';
+      state.csvName = file.name;
+      analyze();
+    });
+
+    applyLanguage();
+    loadScenario();
+  </script>
+</body>
+</html>

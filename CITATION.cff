@@ -21,13 +21,16 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.22985533"
     description: "Version DOI for v0.1.0 (Zenodo; earlier specification-only snapshot)"
-version: "0.2.0"
-date-released: "2026-09-27"
+version: "0.3.0"
+date-released: "2026-10-06"
 abstract: >-
   Reference implementation of the OES-512 layout: 512 channels as 16 blocks of
   32 (16 × OES-32), each block scored with S = 0.45·Peak + 0.35·RMS +
   0.20·MeanAbs on the absolute residual and latched at τ = 0.50, plus a seed-42
-  synthetic benchmark over four Gaussian regimes and a browser avatar. The
+  synthetic benchmark over four Gaussian regimes and a browser avatar.
+  Version 0.3.0 adds a separate bilingual educational demo page (synthetic
+  reference band, missing-data state, experimental parity asymmetry) with a
+  Node self-test; the demo is not the normative reference. The
   per-block residual contract is defined in oes32-residual (ADR-001). Benchmark
   results are SYNTHETIC; the regimes are far apart, so perfect scores show they
   are easy to separate, not that the method is operational. Operational, field
@@ -38,3 +41,5 @@ keywords:
   - residual
   - weighted latch
   - synthetic benchmark
+  - educational demo
+  - anomaly detection

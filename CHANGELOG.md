@@ -6,8 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-06
+
+### Added
+- `sparky-oes512-demo.html`: a separate, self-contained bilingual (EN / FR-CA) educational demo with the Sparky avatar. It scores synthetic scenarios or a loaded 512-value CSV against a built-in synthetic reference band, shows a separate "missing data" block state, and displays an experimental parity-asymmetry signal (not validated; it does not alert by default). Not the normative reference. **SYNTHETIC**; not a medical device.
+- `tests/sparky-demo.test.mjs`: a Node self-test for the demo's scoring and summary core, with a CI job on Node 20.
+- README section "Sparky OES-512 demo (educational)" and an evidence-tag row; hosted on GitHub Pages.
+
 ### Changed
 - `CITATION.cff` and README list the v0.2.0 version DOI 10.5281/zenodo.23002190.
+- Relicensed to AGPL-3.0-only with a commercial licensing option (2026-09-29); versions published before then remain available under MIT.
+- Founder ORCID iD added to the citation metadata.
+- `CITATION.cff` version 0.3.0; `.zenodo.json` description and keywords mention the demo.
 
 ## [0.2.0] - 2026-09-27
 

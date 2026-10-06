@@ -15,6 +15,7 @@ OES-512 = 16 × OES-32 residual blocks. This repository publishes a **reference 
 - **Latch:** a block latches if S ≥ τ, default τ = 0.50.
 - **Synthetic regimes:** Stable, Noisy, Localized Burst, Global Shock (Gaussian residuals, seed 42, 1,000 trials per regime).
 - **Avatar:** [`sparky-oes512.html`](sparky-oes512.html) runs the same score and latch in the browser and maps latched blocks to a face.
+- **Educational demo:** [`sparky-oes512-demo.html`](sparky-oes512-demo.html) is a separate bilingual (EN/FR-CA) explainer page with a residual heatmap, missing-data handling and an experimental parity signal. It is **not** the normative reference; see [Sparky OES-512 demo](#sparky-oes-512-demo-educational).
 
 Files:
 
@@ -23,6 +24,8 @@ Files:
 | [`oes512_complete.py`](oes512_complete.py) | Reference layout, `score_block`, weighted latch, seed-42 synthetic benchmark |
 | [`sparky-oes512.html`](sparky-oes512.html) | Self-contained browser avatar (no external scripts, no trackers) |
 | [`tests/test_oes512.py`](tests/test_oes512.py) | pytest suite: known vectors, input validation, determinism, seed-42 regression |
+| [`sparky-oes512-demo.html`](sparky-oes512-demo.html) | Separate educational demo page (self-contained, no external scripts); not the normative reference |
+| [`tests/sparky-demo.test.mjs`](tests/sparky-demo.test.mjs) | Node self-test for the demo's scoring and summary core (`node tests/sparky-demo.test.mjs`) |
 
 ## What it is NOT
 
@@ -64,6 +67,19 @@ Open `sparky-oes512.html` directly in a browser (double-click the file, or `xdg-
 
 Hosted copy on GitHub Pages: <https://sparkainlp-x.github.io/oes512-residual/sparky-oes512.html>
 
+## Sparky OES-512 demo (educational)
+
+[`sparky-oes512-demo.html`](sparky-oes512-demo.html) is a single-file bilingual page (English / Canadian French) with the Sparky beaver avatar. It is **not a medical device**, uses **SYNTHETIC** or user-supplied non-clinical data only, and every alert needs human review.
+
+- **How to open:** open the file directly in a browser (no server, network access or dependencies), or use the hosted copy: <https://sparkainlp-x.github.io/oes512-residual/sparky-oes512-demo.html>.
+- **What it shows:** five synthetic scenarios (baseline, localized anomaly, progressive drift, global shock, missing data) or a loaded 512-value CSV, as a residual heatmap. It also shows per-block scores, a syndrome bit string, a plain-language summary in either language, and a JSON export.
+- **Relationship to this repository's reference.** The block formula (0.45·Peak + 0.35·RMS + 0.20·Mean of |residual|) and the default τ = 0.50 match `oes512_complete.py`, but the demo is a separate educational score, not the normative reference:
+  - it computes its own residuals (value − reference) against a built-in synthetic reference band, the per-channel mean of 32 seeded baseline frames;
+  - it uses its own scenarios instead of the seed-42 benchmark;
+  - it leaves missing channels out of the score and shows such blocks in a separate "missing data" state, never as an anomaly.
+- **Parity asymmetry (experimental).** A = |mean(r)| / (mean|r| + ε) per block: 0 for symmetric zero-mean residuals, 1 when all residuals share one sign. It is an analogy to physical parity and an exploratory signal, **not validated**. It is shown next to the main score and does not trigger alerts unless you tick its checkbox.
+- **Tests:** `node tests/sparky-demo.test.mjs` (Node ≥ 18) loads the page's delimited scoring core and checks the scenarios, missing-data handling, the French summaries, the parity bounds and CSV parsing. CI runs it on Node 20.
+
 ## Evidence tags
 
 | Item | Tag |
@@ -71,6 +87,7 @@ Hosted copy on GitHub Pages: <https://sparkainlp-x.github.io/oes512-residual/spa
 | OES-512 block layout (16 × 32 channels) | Implemented as a reference in `oes512_complete.py` |
 | Weighted latch S = 0.45·Peak + 0.35·RMS + 0.20·MeanAbs, τ = 0.50 | Implemented as a reference in `oes512_complete.py` and `sparky-oes512.html` |
 | Seed-42 benchmark (four Gaussian regimes, 1,000 trials each) | **SYNTHETIC** |
+| Educational demo `sparky-oes512-demo.html` (scenarios, reference band, parity asymmetry) | **SYNTHETIC**; parity asymmetry experimental, not validated |
 | External or third-party results | None; nothing is **REPORTED** |
 | Operational, field, flight, or medical performance | **UNRUN** (not claimed) |
 
