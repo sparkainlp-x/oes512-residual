@@ -91,8 +91,46 @@
     .danger { color: #ffb3bc; }
     .success { color: #bde79e; }
     .missing { color: #cdb4f0; }
+    /* Talk to Sparky */
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    button:focus-visible, input:focus-visible, select:focus-visible, .btn:focus-visible { outline: 3px solid #9fd8e1; outline-offset: 2px; }
+    .badge.version { margin-left: 6px; background: rgba(253,171,67,.14); color: #fdd29a; }
+    .talk { margin-top: 24px; display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 22px; }
+    .talk h2 { margin: 0 0 6px; }
+    .talk > div { min-width: 0; }
+    .ask-row button { flex: none; }
+    .talk-controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin: 12px 0 6px; }
+    .talk-controls label.check { display:flex; gap:8px; align-items:center; text-transform:none; letter-spacing:0; font-size:13px; margin:0; color:var(--text); }
+    #micBtn { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+    #micBtn[aria-pressed="true"] { background: var(--warn); }
+    #micBtn[aria-disabled="true"] { opacity: .6; }
+    .transcript { font-style: italic; min-height: 1.5em; margin: 4px 0; }
+    .ask-row { display:flex; gap:8px; margin: 10px 0; }
+    .ask-row input { flex:1; min-width:0; background: var(--surface-2); color: var(--text); border:1px solid var(--border); border-radius:12px; padding:10px 12px; font: inherit; }
+    .chat { list-style:none; margin:0; padding:12px; min-height: 120px; max-height: 340px; overflow-y:auto; background: var(--surface); border:1px solid var(--border); border-radius:18px; display:flex; flex-direction:column; gap:8px; }
+    .chat li { padding:8px 12px; border-radius:14px; max-width: 94%; }
+    .chat li.user { align-self:flex-end; background: rgba(255,255,255,.06); }
+    .chat li.sparky { align-self:flex-start; background: rgba(79,152,163,.14); border:1px solid rgba(79,152,163,.25); }
+    .chat .who { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color: var(--muted); }
+    /* avatar: mouth flaps and head bobs while Sparky speaks */
+    .avatar { transition: border-color .2s, box-shadow .2s; }
+    .avatar.speaking { border-color: rgba(79,152,163,.8); box-shadow: 0 0 0 3px rgba(79,152,163,.25); }
+    .avatar.listening { border-color: var(--warn); box-shadow: 0 0 0 3px rgba(253,171,67,.25); }
+    #mouth { transform-box: fill-box; transform-origin: 50% 0%; transform: scaleY(.12); transition: transform .15s; }
+    .avatar.speaking #mouth { animation: sparkyTalk .24s ease-in-out infinite alternate; }
+    .avatar.speaking.beat #mouth { animation-name: sparkyTalk2; }
+    .avatar.speaking svg { animation: sparkyBob .55s ease-in-out infinite alternate; }
+    @keyframes sparkyTalk { from { transform: scaleY(.12); } to { transform: scaleY(1); } }
+    @keyframes sparkyTalk2 { from { transform: scaleY(.12); } to { transform: scaleY(1); } }
+    @keyframes sparkyBob { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+    @media (prefers-reduced-motion: reduce) {
+      .avatar, #mouth { transition: none; }
+      .avatar.speaking #mouth, .avatar.speaking.beat #mouth, .avatar.speaking svg { animation: none; }
+      .avatar.speaking #mouth { transform: scaleY(.7); }
+    }
     @media (max-width: 980px) {
       .hero, .grid { grid-template-columns: 1fr; }
+      .talk { grid-template-columns: minmax(0,1fr); }
       .controls, .metrics, .blocklist { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 640px) {
@@ -117,8 +155,11 @@
           <circle cx="132" cy="120" r="10" fill="#111"/>
           <circle cx="188" cy="120" r="10" fill="#111"/>
           <ellipse cx="160" cy="140" rx="12" ry="9" fill="#2a2019"/>
-          <rect x="144" y="158" width="14" height="22" rx="3" fill="#fff5e8"/>
-          <rect x="162" y="158" width="14" height="22" rx="3" fill="#fff5e8"/>
+          <ellipse id="mouth" cx="160" cy="156" rx="24" ry="17" fill="#3b1d16"/>
+          <g id="teeth">
+            <rect x="144" y="158" width="14" height="22" rx="3" fill="#fff5e8"/>
+            <rect x="162" y="158" width="14" height="22" rx="3" fill="#fff5e8"/>
+          </g>
           <path d="M96 208c14-18 38-26 64-26s50 8 64 26v56H96z" fill="#c71f25"/>
           <path d="M108 208h104v56H108z" fill="#d9272d"/>
           <path d="M136 218h48v48h-48z" fill="#fff"/>
@@ -130,7 +171,7 @@
         </svg>
       </div>
       <div>
-        <span class="badge" data-i18n="badge">Spark AI NLP · Independent Demo</span>
+        <span class="badge" data-i18n="badge">Spark AI NLP · Independent Demo</span><span class="badge version" id="demoVersion">v0.4.0</span>
         <h1>Spark OES-512</h1>
         <p class="lead" data-i18n="lead">An independent Spark AI NLP prototype for explainable 512-channel biosignal monitoring. The interface combines a Canadian beaver avatar, grouped channel visualization, transparent anomaly scoring, bilingual messaging, and mandatory human review.</p>
         <div class="cta">
@@ -139,6 +180,32 @@
           <button class="btn secondary" id="exportBtn" data-i18n="export">Export JSON</button>
         </div>
         <p class="footer" data-i18n="footer">Not a medical device. Uses synthetic or user-supplied non-clinical data only. Human review required for every alert.</p>
+      </div>
+    </section>
+
+    <section class="panel talk" id="talkPanel" aria-labelledby="talkTitle">
+      <div>
+        <h2 id="talkTitle" data-i18n="talkTitle">Talk to Sparky</h2>
+        <p class="small" data-i18n="talkIntro">Ask a question out loud or type it. Sparky answers from the analysis on screen with simple offline rules (no AI model, no network).</p>
+        <div class="talk-controls">
+          <button id="micBtn" type="button" aria-pressed="false" aria-describedby="micStatus"><span aria-hidden="true">🎤 </span><span id="micLabel">Talk to Sparky</span></button>
+          <button id="stopBtn" type="button" class="btn secondary" data-i18n="stopTalk">Stop talking</button>
+          <label class="check"><input type="checkbox" id="voiceReplies" checked /> <span data-i18n="voiceReplies">Speak replies aloud</span></label>
+        </div>
+        <p id="micStatus" class="small" role="status"></p>
+        <p id="voiceNote" class="small" data-i18n="noVoice" hidden>Spoken replies are not available in this browser; replies appear as text.</p>
+        <p class="small transcript"><span data-i18n="heard">Heard:</span> <span id="transcript">—</span></p>
+        <form id="askForm" class="ask-row" autocomplete="off">
+          <label for="askInput" class="sr-only" data-i18n="askLabel">Type a question for Sparky</label>
+          <input id="askInput" type="text" enterkeyhint="send" data-i18n-placeholder="askPlaceholder" placeholder="Try: What’s the status? · Explain block 6 · Show drift" />
+          <button type="submit" id="askBtn" data-i18n="send">Ask</button>
+        </form>
+        <p class="small" data-i18n="privacy">Privacy: in Chrome (and some other browsers), speech recognition may send your audio to the browser vendor’s servers to be transcribed. Typed questions and all of Sparky’s answers stay on your device.</p>
+      </div>
+      <div>
+        <h3 id="chatTitle" style="margin:0 0 10px;" data-i18n="chatTitle">Conversation</h3>
+        <ol id="chatLog" class="chat" aria-labelledby="chatTitle" aria-live="off"></ol>
+        <div id="sparkyLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
       </div>
     </section>
 
@@ -410,6 +477,382 @@
     })();
     // ===== END OES CORE =====
 
+    // ===== BEGIN SPARKY BRAIN (pure, offline, rule-based; no DOM, no network; uses only the OES core; extracted by tests/sparky-brain.test.mjs) =====
+    // SparkyBrain.respond(text, lang, ctx) -> { reply, intent, action, lang }
+    //   text    what the person said or typed (any case, with or without accents)
+    //   lang    'en' or 'fr' (the page language). Replies use it; a language switch answers in the new language.
+    //   ctx     { result, scenario, source, csvName, parityAlerts }; result = OES.analyzeValues(...) for what is on screen
+    //   action  optional: { type:'scenario', value:'drift', then:'status' } or { type:'lang', value:'fr' }; the page applies it
+    // SparkyBrain.status(lang, ctx) gives the status reply on its own (used after a scenario switch).
+    // SparkyBrain.forSpeech(text, lang) rewrites a reply for text-to-speech (B06 -> "block 6", × -> "times", ...).
+    // Every number in a reply is read from ctx.result or from the OES core constants; nothing is invented.
+    const SparkyBrain = (() => {
+      const SCENARIOS = ['baseline', 'local', 'drift', 'global', 'missing'];
+      const NAMES = {
+        en: { baseline:'Baseline stable pattern', local:'Localized anomaly', drift:'Progressive drift', global:'Global shock', missing:'Missing data stress' },
+        fr: { baseline:'Profil de référence stable', local:'Anomalie localisée', drift:'Dérive progressive', global:'Choc global', missing:'Test de données manquantes' }
+      };
+      const NUM = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, eleven:11, twelve:12,
+        thirteen:13, fourteen:14, fifteen:15, sixteen:16, un:1, une:1, deux:2, trois:3, quatre:4, cinq:5, sept:7, huit:8,
+        neuf:9, dix:10, onze:11, douze:12, treize:13, quatorze:14, quinze:15, seize:16 };
+
+      // lower case, no accents, apostrophes and punctuation become spaces: "Qu’est-ce que l’état?" -> "qu est ce que l etat"
+      function norm(s){
+        return String(s ?? '').toLowerCase().replace(/œ/g, 'oe').replace(/æ/g, 'ae')
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9#]+/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+      const f = (x, lang, d=2) => OES.fmt(x, lang, d);
+      const quote = (s, lang) => lang === 'fr' ? `«\u00a0${s}\u00a0»` : `“${s}”`;
+      function list(ids, lang){
+        if (ids.length <= 1) return ids.join('');
+        return ids.slice(0, -1).join(', ') + (lang === 'fr' ? ' et ' : ' and ') + ids[ids.length - 1];
+      }
+
+      const RX = {
+        safety: /\b(sick|ill|illness|disease|diseases|diagnos\w*|medical|medicine|medication|doctor|physician|nurse|health|healthy|symptoms?|treatment|cure|patient|hospital|emergency|heart attack|cancer|dying|die|pain|am i (ok|okay|fine|alright|normal|healthy)|should i (worry|be worried)|is (it|this) (dangerous|serious)|malade|maladie|diagnost\w*|medicale?s?|medicaments?|medecin|docteur|infirmi\w*|sante|symptomes?|traitement|soigner|guerir|patiente?|hopital|urgence|crise cardiaque|mourir|douleur|suis je (correct|normal|normale|ok|malade|en sante)|est ce grave|dangereux|dangereuse|inquiet|inquiete)\b/,
+        langFr: /\b(french|francais|francaise)\b/g,
+        langEn: /\b(english|anglais|anglaise)\b/g,
+        langCue: /\b(speak|talk|switch|change|use|answer|reply|respond|in|en|parle\w*|passe\w*|repond\w*|mode|language|langue|please|svp|plait)\b/,
+        langToggle: /\b(change|switch|changer|changez|change) (the |de |of |la )?(language|langue)\b|\b(other|another|autre) (language|langue)\b/,
+        verb: /\b(show|display|load|switch|change|go|run|open|try|select|choose|pick|set|use|give me|let s see|see|view|simulate|montre\w*|affiche\w*|charge\w*|passe\w*|lance\w*|essai\w*|essay\w*|mets|mettre|met|voir|vois|bascule\w*|choisi\w*|selectionne\w*|simule\w*|ouvre\w*|donne moi)\b/,
+        scen: {
+          missing:  /\b(missing|incomplete|incomplet\w*|manquant\w*|gaps?|trous?|stress)\b/,
+          drift:    /\b(drift|drifting|derive|progressive|progressif|lente|slow)\b/,
+          global:   /\b(global|globale|shock|choc)\b/,
+          local:    /\b(local|locale|localized|localised|localise|localisee|localisees|fault|panne|anomaly|anomalie)\b/,
+          baseline: /\b(baseline|stable|normal|normale|nominal|reference|de base|base scenario)\b/
+        },
+        scenInfo: {
+          drift:    /\b(drift|derive)\b/,
+          global:   /\b(global|globale|shock|choc)\b/,
+          local:    /\b(localized|localised|localise|localisee|local|locale)\b/,
+          baseline: /\b(baseline|stable|de base)\b/
+        },
+        explainish: /\b(scenario|scenarios|what is|what s|what are|explain|describe|tell me about|about the|c est quoi|qu est ce|explique\w*|decri\w*|parle moi)\b/,
+        question: /\b(what|how|why|which|quoi|comment|pourquoi|quel\w*|explain|explique\w*)\b/,
+        limits: /\b(limits?|limitations?|weakness\w*|weak spots?|blind spots?|miss|misses|can t (detect|see|catch)|cannot (detect|see|catch)|fail\w*|false negatives?|subtle|spread out|spread|weak|downside|drawbacks?|caveats?|limites?|faiblesses?|angles? morts?|subtile?s?|faibles?|diffus\w*|inconvenients?|echapp\w*)\b/,
+        parity: /\b(parity|parite|asymmetry|asymmetric|asymetrie|asymetrique|symmetry|symetrie|meter|helicity|helicite|sign flip)\b/,
+        syndrome: /\b(syndromes?|bits?|bit string|binary|binaire|chaine de bits|code)\b/,
+        missing: /\b(missing|incomplete|incomplet\w*|gaps?|nan|no data|manquant\w*|trous?|absent\w*|lacunes?)\b/,
+        top: /\b(highest|max|maximum|strongest|worst|top score|peak score|plus eleve\w*|plus fort\w*|le pire|maximal\w*)\b/,
+        score: /\b(score|scores|scoring|formula|calculat\w*|computed?|how (do|does) (it|you|this) (work|decide)|how it works|weights?|threshold|cut ?off|peak|rms|root mean|mean absolute|residuals?|reference|formule|calcul\w*|seuil|poids|ponder\w*|comment (ca|cela) (marche|fonctionne)|fonctionne|methode|method|residus?)\b/,
+        status: /\b(status|state|what s happening|what is happening|happening|going on|alerts?|alarms?|flag|flags|flagged|anything wrong|wrong|problems?|issues?|summary|summari[sz]e|results?|report|overview|situation|how does it look|how is it looking|statut|etat|se passe|alertes?|alarmes?|signale\w*|problemes?|resume\w*|resultats?|rapport|bilan|apercu|declench\w*)\b/,
+        help: /\b(help|aide|aidez|aider|what can (you|i) (do|ask|say)|what should i (ask|say)|commands?|options|menu|que peux tu|que puis je|quoi dire|quoi demander|qu est ce que je peux|tu peux faire quoi|commandes?)\b/,
+        who: /\b(who are you|what are you|who is sparky|what is sparky|your name|introduce yourself|about you|qui es tu|qui est tu|qui etes vous|t es qui|tu es qui|vous etes qui|ton nom|votre nom|c est quoi sparky|qui est sparky|presente toi|presentez vous)\b/,
+        bye: /\b(bye|goodbye|good bye|see you|see ya|farewell|au revoir|bonne journee|bonne soiree|a la prochaine|a plus tard|ciao|bye bye)\b/,
+        thanks: /\b(thanks|thank you|thx|cheers|merci)\b/,
+        greeting: /\b(hi|hello|hey|hiya|howdy|good (morning|afternoon|evening)|bonjour|bonsoir|salut|allo|coucou|yo|how are you|comment ca va|ca va|comment allez vous)\b/,
+        blocks: /\b(blocks?|blocs?)\b/
+      };
+
+      // "block 6", "bloc 06", "B06", "b 6", "bloc six", "block twelve", or "channel 170" (-> its block)
+      function parseBlock(t){
+        let m = t.match(/\b(?:blocks?|blocs?|b)\s*(?:number |numero |no |n |# ?)?0*(\d{1,3})\b/);
+        if (m) return { n: Number(m[1]) };
+        m = t.match(new RegExp('\\b(?:blocks?|blocs?)\\s+(?:number |numero )?(' + Object.keys(NUM).join('|') + ')\\b'));
+        if (m) return { n: NUM[m[1]] };
+        m = t.match(/\b(?:channel|channels|canal|canaux)\s*(?:number |numero |no )?0*(\d{1,3})\b/);
+        if (m){ const c = Number(m[1]); return { channel: c, n: c >= 1 && c <= OES.CHANNELS ? Math.floor((c - 1) / OES.BLOCK) + 1 : null }; }
+        return null;
+      }
+      function lastIndex(re, t){ let i = -1, m; re.lastIndex = 0; while ((m = re.exec(t))) i = m.index; return i; }
+      function langTarget(t, lang){
+        const fr = lastIndex(RX.langFr, t), en = lastIndex(RX.langEn, t);
+        if (fr < 0 && en < 0) return RX.langToggle.test(t) ? (lang === 'fr' ? 'en' : 'fr') : null;
+        if (!RX.langCue.test(t) && t.split(' ').length > 3) return null;
+        return fr > en ? 'fr' : 'en';
+      }
+      function scenarioCommand(t){
+        const kind = SCENARIOS.slice().sort((a, b) => ['missing','drift','global','local','baseline'].indexOf(a) - ['missing','drift','global','local','baseline'].indexOf(b))
+          .find(k => RX.scen[k].test(t));
+        if (!kind) return null;
+        const hasVerb = RX.verb.test(t.replace(/\bse passe\b/g, ' '));
+        const short = t.split(' ').length <= 4 && !RX.question.test(t) && kind !== 'missing' && kind !== 'local'
+          && !/\b(normal|normale|nominal|reference)\b/.test(t);
+        return hasVerb || short ? kind : null;
+      }
+
+      const where = (ctx, lang) => ctx.source === 'csv'
+        ? (lang === 'fr' ? `le fichier CSV ${quote(ctx.csvName || 'CSV', lang)}` : `the CSV file ${quote(ctx.csvName || 'CSV', lang)}`)
+        : (lang === 'fr' ? `le scénario ${quote(NAMES.fr[ctx.scenario] || ctx.scenario, lang)}` : `the ${quote(NAMES.en[ctx.scenario] || ctx.scenario, lang)} scenario`);
+
+      const NO_RESULT = {
+        en: 'No analysis has run yet. Press “Run analysis” or pick a scenario first.',
+        fr: 'Aucune analyse n’a encore été lancée. Appuyez sur «\u00a0Lancer l’analyse\u00a0» ou choisissez d’abord un scénario.'
+      };
+
+      function status(lang, ctx = {}){
+        lang = lang === 'fr' ? 'fr' : 'en';
+        const R = ctx.result;
+        if (!R || !Array.isArray(R.blocks)) return NO_RESULT[lang];
+        const t = f(R.threshold, lang), n = R.alerts.length, out = [];
+        const fr = lang === 'fr';
+        out.push(fr ? `Vous regardez ${where(ctx, lang)}.` : `You are looking at ${where(ctx, lang)}.`);
+        if (!R.top) out.push(fr ? 'Aucun bloc n’a pu être évalué, car tous les canaux sont manquants.' : 'No block could be scored because every channel is missing.');
+        else if (n){
+          const ids = list(R.alerts.map(b => b.id), lang), ta = R.topAlert;
+          out.push(fr
+            ? `${n} ${n === 1 ? 'bloc sur 16 est signalé' : 'blocs sur 16 sont signalés'} au seuil de ${t}\u00a0: ${ids}.`
+            : `${n} of 16 blocks ${n === 1 ? 'is' : 'are'} flagged at the threshold of ${t}: ${ids}.`);
+          if (ta && ta.score !== null) out.push(fr ? `Le score le plus élevé parmi eux est ${f(ta.score, lang)}, dans ${ta.id}.` : `The highest score among them is ${f(ta.score, lang)}, in ${ta.id}.`);
+          const par = R.alerts.filter(b => b.reasons.includes('parity'));
+          if (par.length) out.push(fr ? `La règle expérimentale de parité a aussi signalé ${list(par.map(b => b.id), lang)}.` : `The experimental parity rule also flagged ${list(par.map(b => b.id), lang)}.`);
+        } else {
+          out.push(fr
+            ? `Aucun bloc n’est signalé au seuil de ${t}. Le score le plus élevé est ${f(R.top.score, lang)}, dans ${R.top.id}.`
+            : `No block is flagged at the threshold of ${t}. The highest score is ${f(R.top.score, lang)}, in ${R.top.id}.`);
+        }
+        if (R.missing.length){
+          const m = R.missing.length;
+          const det = R.missing.map(b => fr ? `${b.id} (${b.missingChannels} canaux manquants sur 32)` : `${b.id} (${b.missingChannels} of 32 channels missing)`).join(', ');
+          out.push(fr
+            ? `${det}\u00a0: ${m === 1 ? 'ce bloc est affiché' : 'ces blocs sont affichés'} comme «\u00a0données incomplètes\u00a0», jamais comme une alarme.`
+            : `${det}: ${m === 1 ? 'this block is' : 'these blocks are'} shown as “data incomplete”, never as an alarm.`);
+          const partial = R.missing.filter(b => b.scoreOnAvailableAboveThreshold);
+          if (partial.length) out.push(fr ? `Pour ${list(partial.map(b => b.id), lang)}, le score sur les canaux disponibles dépasse le seuil; vérifiez les données.` : `For ${list(partial.map(b => b.id), lang)}, the score on the available channels is above the threshold; please check the data.`);
+        }
+        out.push(n
+          ? (fr ? 'Une personne doit examiner chaque alerte avant toute interprétation.' : 'A human must review every alert before any interpretation.')
+          : (fr ? 'Un examen humain reste recommandé.' : 'Human review is still recommended.'));
+        return out.join(' ');
+      }
+
+      function blockReply(p, lang, ctx){
+        const fr = lang === 'fr', R = ctx.result;
+        if (p.channel !== undefined && p.n === null)
+          return fr ? `Les canaux vont de 1 à ${OES.CHANNELS}. Lequel voulez-vous examiner?` : `Channels go from 1 to ${OES.CHANNELS}. Which one should I look at?`;
+        if (!(p.n >= 1 && p.n <= OES.NBLOCKS))
+          return fr ? `Il y a ${OES.NBLOCKS} blocs, de B01 à B16. Lequel voulez-vous que j’explique?` : `There are ${OES.NBLOCKS} blocks, B01 to B16. Which one should I explain?`;
+        if (!R || !Array.isArray(R.blocks)) return NO_RESULT[lang];
+        const b = R.blocks[p.n - 1], t = f(R.threshold, lang), out = [];
+        if (p.channel !== undefined) out.push(fr ? `Le canal ${p.channel} fait partie de ${b.id}.` : `Channel ${p.channel} is in ${b.id}.`);
+        out.push(fr ? `${b.id} couvre les canaux ${b.channels[0]} à ${b.channels[1]}.` : `${b.id} covers channels ${b.channels[0]} to ${b.channels[1]}.`);
+        if (b.score === null){
+          out.push(fr
+            ? `Ses ${b.missingChannels} canaux sont tous manquants, donc il ne peut pas être évalué. Il est affiché comme «\u00a0données incomplètes\u00a0», jamais comme une alarme, et son bit de syndrome reste à 0.`
+            : `All ${b.missingChannels} of its channels are missing, so it cannot be scored. It is shown as “data incomplete”, never as an alarm, and its syndrome bit stays 0.`);
+          return out.join(' ');
+        }
+        out.push(fr
+          ? `Son score est ${f(b.score, lang)} = 0,45 × pic ${f(b.peak, lang)} + 0,35 × RMS ${f(b.rms, lang)} + 0,20 × moyenne ${f(b.meanAbs, lang)} des résidus absolus.`
+          : `Its score is ${f(b.score, lang)} = 0.45 × peak ${f(b.peak, lang)} + 0.35 × RMS ${f(b.rms, lang)} + 0.20 × mean ${f(b.meanAbs, lang)} of the absolute residuals.`);
+        if (b.state === 'missing'){
+          out.push(fr
+            ? `${b.missingChannels} de ses 32 canaux sont manquants\u00a0: il est affiché comme «\u00a0données incomplètes\u00a0», pas comme une alarme, et le score ci-dessus n’utilise que les ${b.finiteChannels} canaux disponibles.`
+            : `${b.missingChannels} of its 32 channels are missing, so it is shown as “data incomplete”, not as an alarm, and the score above uses only the ${b.finiteChannels} available channels.`);
+          if (b.scoreOnAvailableAboveThreshold) out.push(fr ? `Ce score atteint le seuil de ${t}; vérifiez les données.` : `That score reaches the threshold of ${t}, so please check the data.`);
+        } else if (b.state === 'alert'){
+          if (b.reasons.includes('score'))
+            out.push(fr ? `Il atteint ou dépasse le seuil de ${t}\u00a0: il est donc signalé et doit être examiné par une personne.` : `That is at or above the threshold of ${t}, so it is flagged for human review.`);
+          else
+            out.push(fr ? `C’est sous le seuil de ${t}, mais la règle expérimentale de parité, que vous avez activée, le signale (A = ${f(b.parity, lang)}).` : `That is below the threshold of ${t}, but the experimental parity rule, which you turned on, flags it (A = ${f(b.parity, lang)}).`);
+          if (b.reasons.includes('score') && b.reasons.includes('parity'))
+            out.push(fr ? 'La règle expérimentale de parité le signale aussi.' : 'The experimental parity rule flags it too.');
+        } else {
+          out.push(fr ? `C’est sous le seuil de ${t}, donc il n’est pas signalé.` : `That is below the threshold of ${t}, so it is not flagged.`);
+        }
+        if (!(b.state === 'alert' && b.reasons.includes('parity')))
+          out.push(fr
+            ? `Asymétrie de parité A = ${f(b.parity, lang)} (expérimentale${ctx.parityAlerts ? ', alertes activées' : ', à titre indicatif seulement'}).`
+            : `Parity asymmetry A = ${f(b.parity, lang)} (experimental${ctx.parityAlerts ? ', alerts turned on' : ', insight only'}).`);
+        return out.join(' ');
+      }
+
+      function scoreReply(lang, ctx){
+        const fr = lang === 'fr', R = ctx.result, d = f(OES.DEFAULT_THRESHOLD, lang);
+        const out = [fr
+          ? `Chaque bloc de 32 canaux reçoit un score S = 0,45 × pic + 0,35 × RMS + 0,20 × moyenne des résidus absolus (valeur moins la référence synthétique). Un bloc est signalé lorsque S atteint ou dépasse le seuil, ${d} par défaut\u00a0: la même formule et le même seuil que le score officiel OES-512. Les canaux manquants sont exclus du score.`
+          : `Each block of 32 channels gets a score S = 0.45 × peak + 0.35 × RMS + 0.20 × mean of the absolute residuals (value minus the synthetic reference). A block is flagged when S is at or above the threshold, ${d} by default: the same formula and default as the official OES-512 score. Missing channels are left out of the score.`];
+        if (R && Number.isFinite(R.threshold) && Math.abs(R.threshold - OES.DEFAULT_THRESHOLD) > 1e-9)
+          out.push(fr ? `Le curseur est actuellement réglé à ${f(R.threshold, lang)}.` : `The slider is set to ${f(R.threshold, lang)} right now.`);
+        out.push(fr ? 'Demandez par exemple «\u00a0explique le bloc 6\u00a0» pour voir le calcul d’un bloc.' : 'Ask “explain block 6”, for example, to see one block worked out.');
+        return out.join(' ');
+      }
+
+      function limitsReply(lang, ctx){
+        const fr = lang === 'fr', R = ctx.result;
+        const th = R && Number.isFinite(R.threshold) ? R.threshold : OES.DEFAULT_THRESHOLD;
+        const ex = Math.round(th * 0.6 * 100) / 100;   // a uniform shift of ex on all 32 channels scores exactly ex
+        return fr
+          ? `La principale limite\u00a0: le score ne peut jamais dépasser le pic du bloc, car la RMS et la moyenne ne dépassent jamais le pic et les poids totalisent 1. Un bloc n’est donc signalé que si au moins un canal s’écarte de ${f(th, lang)} ou plus. Un changement faible mais étalé sur beaucoup de canaux, par exemple un décalage uniforme de ${f(ex, lang)} sur les 32 canaux, donne un score de ${f(ex, lang)} exactement et reste sous le seuil. Le seuil a aussi été choisi à la main pour ces scénarios synthétiques; il n’est pas validé sur de vrais signaux. Le compteur de parité expérimental vise ce genre de décalage uniforme, mais il n’est pas validé non plus.`
+          : `The main limit: the score can never be larger than the block’s peak, because RMS and mean are never above the peak and the weights add up to 1. So a block is only flagged if at least one channel deviates by ${f(th, lang)} or more. A weak change spread thinly across many channels, for example a uniform shift of ${f(ex, lang)} on all 32 channels, scores exactly ${f(ex, lang)} and stays below the threshold. The threshold was also picked by hand for these synthetic scenarios and is not validated on real signals. The experimental parity meter looks at this kind of uniform shift, but it is not validated either.`;
+      }
+
+      function parityReply(lang, ctx){
+        const fr = lang === 'fr', R = ctx.result;
+        const thA = f(OES.PARITY_THRESHOLD, lang), thM = f(OES.PARITY_MIN_MAG, lang);
+        const out = [fr
+          ? `Le compteur de parité est expérimental. Pour chaque bloc, il calcule A = |moyenne(r)| / (moyenne|r| + ε)\u00a0: environ 0 quand les résidus sont symétriques autour de zéro, 1 quand ils ont tous le même signe (un décalage uniforme).`
+          : `The parity meter is experimental. For each block it computes A = |mean(r)| / (mean|r| + ε): about 0 when the residuals are symmetric around zero, and 1 when they all share one sign (a uniform shift).`];
+        if (R && Array.isArray(R.blocks)){
+          const scored = R.blocks.filter(b => b.parity !== null);
+          if (scored.length){
+            const top = scored.reduce((a, b) => b.parity > a.parity ? b : a);
+            const meet = R.blocks.filter(b => b.state !== 'missing' && b.parity !== null && b.meanAbs >= OES.PARITY_MIN_MAG && b.parity >= OES.PARITY_THRESHOLD);
+            const k = meet.length, ids = list(meet.map(b => b.id), lang);
+            out.push(fr
+              ? `En ce moment, le A le plus élevé est ${f(top.parity, lang)}, dans ${top.id}, et ${k === 0 ? 'aucun bloc ne remplit' : k === OES.NBLOCKS ? `les ${k} blocs remplissent` : k === 1 ? `1 bloc remplit (${ids})` : `${k} blocs remplissent (${ids})`} la règle de parité (A ≥ ${thA} et moyenne|r| ≥ ${thM}).`
+              : `Right now the highest A is ${f(top.parity, lang)}, in ${top.id}, and ${k === 0 ? 'no block meets' : k === OES.NBLOCKS ? `all ${k} blocks meet` : k === 1 ? `1 block meets (${ids})` : `${k} blocks meet (${ids})`} the parity rule (A ≥ ${thA} and mean|r| ≥ ${thM}).`);
+          }
+        }
+        out.push(ctx.parityAlerts
+          ? (fr ? 'Sa case est cochée\u00a0: les blocs qui remplissent la règle sont aussi signalés.' : 'Its checkbox is on, so blocks that meet the rule are also flagged.')
+          : (fr ? 'C’est seulement un indicateur\u00a0: il ne déclenche aucune alerte tant que sa case n’est pas cochée.' : 'It is insight only: it does not trigger alerts unless you tick its checkbox.'));
+        return out.join(' ');
+      }
+
+      function syndromeReply(lang, ctx){
+        const fr = lang === 'fr', R = ctx.result;
+        const out = [fr
+          ? 'Le syndrome est une chaîne de 16 bits, un par bloc, de B01 à gauche jusqu’à B16 à droite\u00a0: 1 veut dire signalé, 0 veut dire non signalé.'
+          : 'The syndrome is a 16-bit string with one bit per block, from B01 on the left to B16 on the right: 1 means flagged, 0 means not flagged.'];
+        if (R && typeof R.syndrome === 'string'){
+          const set = R.blocks.filter(b => b.state === 'alert').map(b => b.id);
+          out.push(fr
+            ? `En ce moment, c’est ${R.syndrome}${set.length ? `\u00a0: ${set.length === 1 ? 'le bit est levé' : 'les bits sont levés'} pour ${list(set, lang)}.` : '; aucun bit n’est levé.'}`
+            : `Right now it is ${R.syndrome}${set.length ? `, with ${set.length === 1 ? 'the bit' : 'bits'} set for ${list(set, lang)}.` : ', so no bit is set.'}`);
+        }
+        out.push(fr ? 'Un bloc avec des données manquantes garde toujours un 0, car des données manquantes ne sont pas une alarme.' : 'A block with missing data always keeps a 0, because missing data is not an alarm.');
+        return out.join(' ');
+      }
+
+      function missingReply(lang, ctx){
+        const fr = lang === 'fr', R = ctx.result;
+        const out = [fr
+          ? 'Les canaux manquants sont exclus du score. Un bloc qui a au moins un canal manquant est affiché comme «\u00a0données incomplètes\u00a0»\u00a0: jamais comme une alarme, et son bit de syndrome reste à 0.'
+          : 'Missing channels are left out of the score. A block with any missing channel is shown as “data incomplete”: never as an alarm, and its syndrome bit stays 0.'];
+        if (R && Array.isArray(R.missing)){
+          if (R.missing.length)
+            out.push(fr
+              ? `En ce moment\u00a0: ${R.missing.map(b => `${b.id} (${b.missingChannels} canaux manquants sur 32)`).join(', ')}.`
+              : `Right now: ${R.missing.map(b => `${b.id} (${b.missingChannels} of 32 channels missing)`).join(', ')}.`);
+          else
+            out.push(fr ? 'En ce moment, aucun bloc n’a de données manquantes. Dites «\u00a0montre les données manquantes\u00a0» pour essayer.' : 'Right now no block has missing data. Say “show missing data” to try it.');
+        }
+        return out.join(' ');
+      }
+
+      const SCEN_INFO = {
+        en: {
+          baseline: 'a stable synthetic pattern with nothing added; it should stay nominal.',
+          local: 'a strong fault added to channels 161 to 192 only, which is block B06.',
+          drift: 'a slow ramp added from channel 257 to channel 512, growing toward the end, so the late blocks rise the most.',
+          global: 'a shift of about 0.9, with a gentle wave, added to all 512 channels.',
+          missing: 'channels 321 to 352, block B11, removed to show how missing data is handled.'
+        },
+        fr: {
+          baseline: 'un profil synthétique stable sans aucun ajout; il devrait rester nominal.',
+          local: 'une forte anomalie ajoutée seulement aux canaux 161 à 192, soit le bloc B06.',
+          drift: 'une rampe lente ajoutée du canal 257 au canal 512, qui grandit vers la fin; les derniers blocs montent donc le plus.',
+          global: 'un décalage d’environ 0,9, avec une légère ondulation, ajouté aux 512 canaux.',
+          missing: 'les canaux 321 à 352, soit le bloc B11, retirés pour montrer la gestion des données manquantes.'
+        }
+      };
+      const CMD = { en:{ baseline:'show baseline', local:'show the localized anomaly', drift:'show drift', global:'show the global shock', missing:'show missing data' },
+                    fr:{ baseline:'montre la référence', local:'montre l’anomalie localisée', drift:'montre la dérive', global:'montre le choc global', missing:'montre les données manquantes' } };
+      function scenarioInfoReply(kind, lang, ctx){
+        const fr = lang === 'fr';
+        const on = ctx.source !== 'csv' && ctx.scenario === kind;
+        return fr
+          ? `Le scénario ${quote(NAMES.fr[kind], lang)} est ${SCEN_INFO.fr[kind]} ${on ? 'C’est le scénario affiché en ce moment.' : `Dites ${quote(CMD.fr[kind], lang)} pour l’afficher.`}`
+          : `The ${quote(NAMES.en[kind], lang)} scenario is ${SCEN_INFO.en[kind]} ${on ? 'It is the scenario on screen right now.' : `Say ${quote(CMD.en[kind], lang)} to switch to it.`}`;
+      }
+
+      const TEXT = {
+        safety: {
+          en: 'I can’t tell you anything about your health. This is a teaching demo with synthetic data, not a medical device, and a human must review every alert. For any health concern, please talk to a doctor or another qualified health professional; in an emergency, call 911.',
+          fr: 'Je ne peux rien vous dire sur votre santé. Ceci est une démonstration éducative avec des données synthétiques, pas un instrument médical, et une personne doit examiner chaque alerte. Pour toute question de santé, consultez un médecin ou un autre professionnel de la santé qualifié; en cas d’urgence, composez le 911.'
+        },
+        who: {
+          en: 'I’m Sparky, a Canadian beaver and the mascot of the Spark OES-512 teaching demo. I explain how 512 synthetic channels are scored in 16 blocks of 32. I run entirely in your browser with simple rules, no AI model and no network. I’m not a doctor and this is not a medical device.',
+          fr: 'Je suis Sparky, un castor canadien et la mascotte de la démonstration éducative Spark OES-512. J’explique comment 512 canaux synthétiques sont évalués en 16 blocs de 32. Je fonctionne entièrement dans votre navigateur avec des règles simples, sans modèle d’IA ni réseau. Je ne suis pas médecin et ceci n’est pas un instrument médical.'
+        },
+        help: {
+          en: 'You can ask me: “what’s the status?”, “explain block 6”, “how does the score work?”, “what is the syndrome?”, “what about missing data?”, “what is the parity meter?”, “what are the limits?”, “show drift” or “show the global shock” to change the scenario, “speak French” to switch language, or “who are you?”.',
+          fr: 'Vous pouvez me demander\u00a0: «\u00a0quel est l’état?\u00a0», «\u00a0explique le bloc 6\u00a0», «\u00a0comment fonctionne le score?\u00a0», «\u00a0c’est quoi le syndrome?\u00a0», «\u00a0et les données manquantes?\u00a0», «\u00a0c’est quoi la parité?\u00a0», «\u00a0quelles sont les limites?\u00a0», «\u00a0montre la dérive\u00a0» ou «\u00a0montre le choc global\u00a0» pour changer de scénario, «\u00a0parle anglais\u00a0» pour changer de langue, ou «\u00a0qui es-tu?\u00a0».'
+        },
+        greeting: {
+          en: 'Hi, I’m Sparky! Ask me “what’s the status?”, “explain block 6”, or say “help” to hear everything you can ask.',
+          fr: 'Bonjour, moi c’est Sparky! Demandez-moi «\u00a0quel est l’état?\u00a0», «\u00a0explique le bloc 6\u00a0», ou dites «\u00a0aide\u00a0» pour savoir tout ce que vous pouvez demander.'
+        },
+        thanks: { en: 'You’re welcome! Ask me anything else about the demo, or say “help”.', fr: 'Ça me fait plaisir! Posez-moi d’autres questions sur la démo, ou dites «\u00a0aide\u00a0».' },
+        bye: { en: 'Bye for now! Remember: this is a teaching demo, and a human reviews every alert.', fr: 'À la prochaine! N’oubliez pas\u00a0: c’est une démo éducative, et une personne examine chaque alerte.' },
+        blocks: {
+          en: 'The 512 channels are split into 16 blocks of 32, named B01 to B16; B01 is channels 1 to 32. Ask about one, for example “explain block 6”.',
+          fr: 'Les 512 canaux sont répartis en 16 blocs de 32, nommés B01 à B16; B01 correspond aux canaux 1 à 32. Demandez-en un, par exemple «\u00a0explique le bloc 6\u00a0».'
+        },
+        fallback: {
+          en: 'Sorry, I’m not sure I understood. I’m a simple offline helper; say “help” to hear what you can ask.',
+          fr: 'Désolé, je ne suis pas certain d’avoir compris. Je suis un petit assistant hors ligne; dites «\u00a0aide\u00a0» pour savoir quoi me demander.'
+        },
+        empty: {
+          en: 'I didn’t catch anything. Say or type “help” to hear what you can ask.',
+          fr: 'Je n’ai rien entendu. Dites ou tapez «\u00a0aide\u00a0» pour savoir quoi me demander.'
+        },
+        langNow: { en: 'Okay, I’ll speak English now.', fr: 'Parfait, je vais maintenant parler en français.' },
+        langAlready: { en: 'I’m already speaking English.', fr: 'Je parle déjà en français.' },
+        switching: {
+          en: (k) => `Okay, switching to the ${quote(NAMES.en[k], 'en')} scenario.`,
+          fr: (k) => `D’accord, je passe au scénario ${quote(NAMES.fr[k], 'fr')}.`
+        }
+      };
+
+      function respond(text, lang = 'en', ctx = {}){
+        lang = lang === 'fr' ? 'fr' : 'en';
+        ctx = ctx || {};
+        const t = norm(text);
+        const has = (re) => re.test(t);
+        const R = ctx.result && Array.isArray(ctx.result.blocks) ? ctx.result : null;
+        const out = (intent, reply, action = null, rlang = lang) => ({ intent, reply, action, lang: rlang });
+        const needR = (intent, fn) => out(intent, R ? fn() : NO_RESULT[lang]);
+
+        if (!t) return out('empty', TEXT.empty[lang]);
+        if (has(RX.safety)) return out('safety', TEXT.safety[lang]);
+        const target = langTarget(t, lang);
+        if (target) return target === lang ? out('language', TEXT.langAlready[lang]) : out('language', TEXT.langNow[target], { type:'lang', value:target }, target);
+        const blk = parseBlock(t);
+        if (blk) return out('block', blockReply(blk, lang, ctx));
+        const kind = scenarioCommand(t);
+        if (kind) return out('scenario', TEXT.switching[lang](kind), { type:'scenario', value:kind, then:'status' });
+        if (has(RX.limits)) return out('limits', limitsReply(lang, ctx));
+        if (has(RX.parity)) return out('parity', parityReply(lang, ctx));
+        if (has(RX.syndrome)) return out('syndrome', syndromeReply(lang, ctx));
+        if (has(RX.missing)) return out('missing', missingReply(lang, ctx));
+        if (has(RX.top)) return needR('status', () => status(lang, ctx));
+        if (has(RX.score)) return out('score', scoreReply(lang, ctx));
+        if (has(RX.explainish)){
+          const k = ['drift', 'global', 'local', 'baseline'].find(k => RX.scenInfo[k].test(t));
+          if (k) return out('scenarioInfo', scenarioInfoReply(k, lang, ctx));
+        }
+        if (has(RX.status)) return needR('status', () => status(lang, ctx));
+        if (has(RX.help)) return out('help', TEXT.help[lang]);
+        if (has(RX.who)) return out('who', TEXT.who[lang]);
+        if (has(RX.bye)) return out('bye', TEXT.bye[lang]);
+        if (has(RX.thanks)) return out('thanks', TEXT.thanks[lang]);
+        if (has(RX.greeting)) return out('greeting', TEXT.greeting[lang]);
+        if (has(RX.blocks)) return out('blocks', TEXT.blocks[lang]);
+        return out('fallback', TEXT.fallback[lang]);
+      }
+
+      // Reply text -> something a speech engine reads well.
+      function forSpeech(text, lang = 'en'){
+        const fr = lang === 'fr';
+        return String(text ?? '')
+          .replace(/\|mean\(r\)\| \/ \(mean\|r\| \+ ε\)/g, 'the absolute mean residual divided by the mean absolute residual')
+          .replace(/\|moyenne\(r\)\| \/ \(moyenne\|r\| \+ ε\)/g, 'la valeur absolue de la moyenne des résidus divisée par la moyenne des résidus absolus')
+          .replace(/mean\|r\|/g, 'mean absolute residual').replace(/moyenne\|r\|/g, 'moyenne des résidus absolus')
+          .replace(/\bB(\d{2})\b/g, (_, d) => `${fr ? 'bloc' : 'block'} ${Number(d)}`)
+          .replace(/\b([01]{16})\b/g, (_, s) => s.split('').join(' '))
+          .replace(/ \+ /g, ' plus ').replace(/×/g, fr ? ' fois ' : ' times ').replace(/≥/g, fr ? ' au moins ' : ' at least ')
+          .replace(/\bS = /g, fr ? 'S égale ' : 'S equals ').replace(/ = /g, fr ? ' égale ' : ' equals ')
+          .replace(/[“”«»]/g, '').replace(/\u00a0/g, ' ').replace(/\s{2,}/g, ' ').trim();
+      }
+
+      return { respond, reply: (text, lang, ctx) => respond(text, lang, ctx).reply, status, forSpeech, norm, parseBlock, NAMES, SCENARIOS };
+    })();
+    // ===== END SPARKY BRAIN =====
+
     const I18N = {
       en: {
         avatarAria:'Sparky beaver avatar illustration', avatarSvgAria:'Canadian beaver in a red hockey jersey',
@@ -436,7 +879,22 @@
         srcCsv:(name)=>`Source: CSV file “${name}”, compared with the same built-in synthetic reference. The “Run analysis” button reloads the selected scenario.`,
         csvCount:(n)=>`Please provide exactly 512 values (found ${n}). Empty cells, NaN, NA or null are accepted as missing.`,
         csvToken:(tk)=>`“${tk}” is not a finite number. Empty cells, NaN, NA or null are accepted as missing.`,
-        csvAllMissing:'Every value in this file is missing.', noSummary:'No summary available.', noSpeech:'Speech synthesis is not available in this browser.'
+        csvAllMissing:'Every value in this file is missing.', noSummary:'No summary available.', noSpeech:'Speech synthesis is not available in this browser.',
+        talkTitle:'Talk to Sparky', talkIntro:'Ask a question out loud or type it. Sparky answers from the analysis on screen with simple offline rules (no AI model, no network).',
+        micStart:'Talk to Sparky', micListening:'Listening… press to stop', stopTalk:'Stop talking', voiceReplies:'Speak replies aloud',
+        heard:'Heard:', askLabel:'Type a question for Sparky', askPlaceholder:'Try: What’s the status? · Explain block 6 · Show drift', send:'Ask',
+        chatTitle:'Conversation', you:'You',
+        privacy:'Privacy: in Chrome (and some other browsers), speech recognition may send your audio to the browser vendor’s servers to be transcribed. Typed questions and all of Sparky’s answers stay on your device.',
+        noVoice:'Spoken replies are not available in this browser; replies appear as text.',
+        micReady:'Press the button and speak, or hold it while you talk. Voice input works best in Chrome or Edge; the text box works in every browser.',
+        micListeningNow:'Listening… speak now.',
+        micUnsupported:'Voice input is not available in this browser (for example Firefox, or Safari with dictation turned off). Type your question in the box below instead; Chrome and Edge offer voice input.',
+        micNothing:'I didn’t hear anything. Try again, or type your question.',
+        micDenied:'Microphone access is blocked. Allow the microphone in the browser’s site settings, or type your question.',
+        micNoMic:'No microphone was found. Type your question instead.',
+        micNetwork:'The browser’s speech recognition service could not be reached (in Chrome it runs online). Type your question instead; everything else works offline.',
+        micLang:'This browser cannot recognize Canadian English here. Type your question instead.',
+        micError:(e)=>`Voice input stopped${e ? ` (${e})` : ''}. Type your question instead.`
       },
       fr: {
         avatarAria:'Illustration de l’avatar Sparky, un castor', avatarSvgAria:'Castor canadien portant un chandail de hockey rouge',
@@ -463,7 +921,22 @@
         srcCsv:(name)=>`Source\u00a0: fichier CSV «\u00a0${name}\u00a0», comparé à la même référence synthétique intégrée. Le bouton «\u00a0Lancer l’analyse\u00a0» recharge le scénario sélectionné.`,
         csvCount:(n)=>`Veuillez fournir exactement 512 valeurs (${n} trouvées). Les cellules vides, NaN, NA ou null sont acceptées comme valeurs manquantes.`,
         csvToken:(tk)=>`«\u00a0${tk}\u00a0» n’est pas un nombre fini. Les cellules vides, NaN, NA ou null sont acceptées comme valeurs manquantes.`,
-        csvAllMissing:'Toutes les valeurs de ce fichier sont manquantes.', noSummary:'Aucun résumé disponible.', noSpeech:'La synthèse vocale n’est pas offerte dans ce navigateur.'
+        csvAllMissing:'Toutes les valeurs de ce fichier sont manquantes.', noSummary:'Aucun résumé disponible.', noSpeech:'La synthèse vocale n’est pas offerte dans ce navigateur.',
+        talkTitle:'Parler à Sparky', talkIntro:'Posez une question à voix haute ou tapez-la. Sparky répond à partir de l’analyse affichée, avec des règles simples hors ligne (aucun modèle d’IA, aucun réseau).',
+        micStart:'Parler à Sparky', micListening:'J’écoute… appuyez pour arrêter', stopTalk:'Arrêter de parler', voiceReplies:'Lire les réponses à voix haute',
+        heard:'Entendu\u00a0:', askLabel:'Tapez une question pour Sparky', askPlaceholder:'Essayez\u00a0: Quel est l’état? · Explique le bloc 6 · Montre la dérive', send:'Demander',
+        chatTitle:'Conversation', you:'Vous',
+        privacy:'Confidentialité\u00a0: dans Chrome (et certains autres navigateurs), la reconnaissance vocale peut envoyer votre voix aux serveurs de l’éditeur du navigateur pour la transcrire. Les questions tapées et toutes les réponses de Sparky restent sur votre appareil.',
+        noVoice:'Les réponses parlées ne sont pas offertes dans ce navigateur; elles s’affichent en texte.',
+        micReady:'Appuyez sur le bouton et parlez, ou maintenez-le enfoncé pendant que vous parlez. La saisie vocale fonctionne mieux dans Chrome ou Edge; la zone de texte fonctionne dans tous les navigateurs.',
+        micListeningNow:'J’écoute… parlez maintenant.',
+        micUnsupported:'La saisie vocale n’est pas offerte dans ce navigateur (par exemple Firefox, ou Safari sans la dictée). Tapez plutôt votre question dans la zone ci-dessous; Chrome et Edge offrent la saisie vocale.',
+        micNothing:'Je n’ai rien entendu. Réessayez ou tapez votre question.',
+        micDenied:'L’accès au micro est bloqué. Autorisez le micro dans les paramètres du site, ou tapez votre question.',
+        micNoMic:'Aucun micro n’a été trouvé. Tapez plutôt votre question.',
+        micNetwork:'Le service de reconnaissance vocale du navigateur est injoignable (dans Chrome, il fonctionne en ligne). Tapez plutôt votre question; tout le reste fonctionne hors ligne.',
+        micLang:'Ce navigateur ne peut pas reconnaître le français canadien ici. Tapez plutôt votre question.',
+        micError:(e)=>`La saisie vocale s’est arrêtée${e ? ` (${e})` : ''}. Tapez plutôt votre question.`
       }
     };
 
@@ -489,9 +962,11 @@
       document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n); });
       document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', T(el.dataset.i18nAria)));
       document.querySelectorAll('[data-i18n-title]').forEach(el => el.title = T(el.dataset.i18nTitle));
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => el.placeholder = T(el.dataset.i18nPlaceholder));
       $('thVal').textContent = OES.fmt(state.threshold, state.lang);
       $('method').textContent = T('method')(OES.REF_FRAMES, `${OES.REF_SEED0}–${OES.REF_SEED0+OES.REF_FRAMES-1}`, OES.fmt(OES.DEFAULT_THRESHOLD, state.lang));
       $('parityText').textContent = T('parityText')(OES.fmt(OES.PARITY_THRESHOLD, state.lang), OES.fmt(OES.PARITY_MIN_MAG, state.lang));
+      updateMicUI();
     }
 
     function loadScenario(){
@@ -568,16 +1043,14 @@
     $('mode').addEventListener('change', e => { state.mode = e.target.value; render(); });
     $('runBtn').addEventListener('click', loadScenario);
     $('speakBtn').addEventListener('click', () => {
-      if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') { alert(T('noSpeech')); return; }
-      const utter = new SpeechSynthesisUtterance(state.lastSummary || T('noSummary'));
-      utter.lang = state.lang === 'fr' ? 'fr-CA' : 'en-CA';
-      speechSynthesis.cancel();
-      speechSynthesis.speak(utter);
+      if (!TTS_OK) { alert(T('noSpeech')); return; }
+      speak(state.lastSummary || T('noSummary'));   // same voice choice and avatar animation as Sparky's replies
     });
     $('exportBtn').addEventListener('click', () => {
       const R = state.result, ref = OES.reference();
       const payload = {
         project: 'Spark OES-512 Demo',
+        demoVersion: DEMO_VERSION,
         generatedAt: new Date().toISOString(),
         source: state.source === 'csv' ? { type: 'csv', file: state.csvName } : { type: 'scenario', scenario: state.scenario },
         threshold: state.threshold,
@@ -630,8 +1103,208 @@
       analyze();
     });
 
+    // ===== OPTIONAL AI-MODEL BRAIN HOOK (disabled; this file makes no network calls) =====
+    // Future builds can plug a model-backed brain in here without touching the offline brain:
+    //   SparkyRemoteBrain.enabled = true;
+    //   SparkyRemoteBrain.reply = async (text, lang, ctx, local) => '...';   // return a string, or null to keep the offline reply
+    // reply() receives the question, the page language ('en' | 'fr'), the same analysis context the offline brain
+    // sees (ctx.result is the live OES result) and the offline answer { reply, intent, action }.
+    // Guardrails kept by the page: safety/medical questions, scenario switches and language switches always use
+    // the offline brain; an error, a timeout or an empty answer falls back to the offline reply. Nothing is
+    // implemented here: no request is made, no key is stored, and the hook is off.
+    const SparkyRemoteBrain = { enabled: false, reply: null, timeoutMs: 8000 };
+
+    // ===== Talk to Sparky (voice and text UI) =====
+    const DEMO_VERSION = '0.4.0';
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+    const TTS_OK = typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined';
+    const avatarEl = document.querySelector('.avatar');
+    const micBtn = $('micBtn'), micLabel = $('micLabel'), stopBtn = $('stopBtn'), micStatus = $('micStatus');
+    const transcriptEl = $('transcript'), askForm = $('askForm'), askInput = $('askInput');
+    const chatLog = $('chatLog'), liveEl = $('sparkyLive'), voiceToggle = $('voiceReplies');
+    const talk = { rec: null, listening: false, finalText: '', lastText: '', lastError: '', utterId: 0, watch: null,
+      downAt: 0, wasListening: false, statusKey: '' };
+
+    function brainContext(){
+      return { result: state.result, scenario: state.scenario, source: state.source, csvName: state.csvName,
+        parityAlerts: state.parityAlerts, threshold: state.threshold };
+    }
+    function setStatus(key, arg){
+      talk.statusKey = key; talk.statusArg = arg;
+      const v = key ? T(key) : '';
+      micStatus.textContent = typeof v === 'function' ? v(arg) : (v || '');
+    }
+    function updateMicUI(){
+      micLabel.textContent = talk.listening ? T('micListening') : T('micStart');
+      micBtn.setAttribute('aria-pressed', talk.listening ? 'true' : 'false');
+      if (!SpeechRec) micBtn.setAttribute('aria-disabled', 'true');
+      avatarEl.classList.toggle('listening', talk.listening);
+      if (talk.statusKey) setStatus(talk.statusKey, talk.statusArg);   // re-translate the current status line
+      voiceToggle.disabled = !TTS_OK;
+    }
+
+    // --- text-to-speech with a matching voice and avatar animation ---
+    function pickVoice(lang){
+      if (!TTS_OK) return null;
+      const want = lang === 'fr' ? 'fr-ca' : 'en-ca', pre = lang === 'fr' ? 'fr' : 'en';
+      const tag = v => String(v.lang || '').replace('_', '-').toLowerCase();
+      const rank = v => { const l = tag(v); const r = l === want ? 0 : l.split('-')[0] === pre ? 2 : 9; return r === 9 ? 9 : r + (v.localService ? 0 : 1); };
+      const voices = (speechSynthesis.getVoices() || []).filter(v => rank(v) < 9).sort((a, b) => rank(a) - rank(b));
+      return voices[0] || null;
+    }
+    function setSpeaking(on){
+      avatarEl.classList.toggle('speaking', on);
+      if (!on) avatarEl.classList.remove('beat');
+      clearInterval(talk.watch); talk.watch = null;
+      if (on && TTS_OK) talk.watch = setInterval(() => {      // some engines never fire 'end'
+        if (!speechSynthesis.speaking && !speechSynthesis.pending) setSpeaking(false);
+      }, 600);
+    }
+    function speak(text){
+      if (!TTS_OK || !text) return false;
+      const lang = state.lang, id = ++talk.utterId;
+      speechSynthesis.cancel();
+      const spoken = SparkyBrain.forSpeech(text, lang);
+      // short chunks: Chrome cuts off long utterances
+      const chunks = [];
+      for (const s of spoken.split(/(?<=[.!?;])\s+/)){
+        if (chunks.length && (chunks[chunks.length - 1] + ' ' + s).length < 180) chunks[chunks.length - 1] += ' ' + s;
+        else chunks.push(s);
+      }
+      const voice = pickVoice(lang);
+      chunks.forEach((c, i) => {
+        const u = new SpeechSynthesisUtterance(c);
+        u.lang = lang === 'fr' ? 'fr-CA' : 'en-CA';
+        if (voice) u.voice = voice;
+        u.onstart = () => { if (id === talk.utterId) setSpeaking(true); };
+        u.onboundary = () => { if (id === talk.utterId) avatarEl.classList.toggle('beat'); };
+        u.onend = () => { if (id === talk.utterId && i === chunks.length - 1) setSpeaking(false); };
+        u.onerror = () => { if (id === talk.utterId) setSpeaking(false); };
+        speechSynthesis.speak(u);
+      });
+      return true;
+    }
+    function stopTalking(){
+      talk.utterId++;
+      if (TTS_OK) speechSynthesis.cancel();
+      setSpeaking(false);
+    }
+
+    // --- conversation log ---
+    function addLog(who, text){
+      const li = document.createElement('li');
+      li.className = who;
+      const w = document.createElement('span');
+      w.className = 'who';
+      w.textContent = who === 'user' ? T('you') : 'Sparky';
+      const body = document.createElement('span');
+      body.textContent = text;
+      li.append(w, body);
+      chatLog.appendChild(li);
+      while (chatLog.children.length > 60) chatLog.firstElementChild.remove();
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+    function deliver(reply){
+      addLog('sparky', reply);
+      liveEl.textContent = reply;
+      if (voiceToggle.checked) speak(reply);
+    }
+    function applyBrainAction(a){
+      if (!a) return;
+      if (a.type === 'scenario' && SparkyBrain.SCENARIOS.includes(a.value)){
+        state.scenario = a.value; $('scenario').value = a.value; loadScenario();
+      } else if (a.type === 'lang' && (a.value === 'en' || a.value === 'fr')){
+        state.lang = a.value; $('lang').value = a.value; applyLanguage(); render();
+      }
+    }
+    function handleUtterance(text){
+      const said = String(text || '').trim();
+      if (!said) return;
+      addLog('user', said);
+      const out = SparkyBrain.respond(said, state.lang, brainContext());
+      let reply = out.reply;
+      if (out.action){
+        applyBrainAction(out.action);
+        if (out.action.then === 'status') reply += ' ' + SparkyBrain.status(state.lang, brainContext());
+      }
+      const remoteOk = SparkyRemoteBrain.enabled && typeof SparkyRemoteBrain.reply === 'function' && out.intent !== 'safety' && !out.action;
+      if (!remoteOk) { deliver(reply); return; }
+      const timeout = new Promise(res => setTimeout(() => res(null), SparkyRemoteBrain.timeoutMs));
+      Promise.race([Promise.resolve().then(() => SparkyRemoteBrain.reply(said, state.lang, brainContext(), out)), timeout])
+        .then(r => deliver(typeof r === 'string' && r.trim() ? r.trim() : reply), () => deliver(reply));
+    }
+
+    // --- speech recognition (push to talk) ---
+    const MIC_ERR = { 'not-allowed':'micDenied', 'service-not-allowed':'micDenied', 'no-speech':'micNothing',
+      'audio-capture':'micNoMic', 'network':'micNetwork', 'language-not-supported':'micLang' };
+    function startListening(){
+      if (!SpeechRec){ setStatus('micUnsupported'); askInput.focus(); return; }
+      if (talk.listening) return;
+      stopTalking();                                   // Sparky should not hear itself
+      let rec;
+      try { rec = new SpeechRec(); } catch (e) { setStatus('micUnsupported'); return; }
+      rec.lang = state.lang === 'fr' ? 'fr-CA' : 'en-CA';
+      rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+      talk.rec = rec; talk.finalText = ''; talk.lastText = ''; talk.lastError = '';
+      transcriptEl.textContent = '…';
+      rec.onresult = (e) => {
+        let fin = '', interim = '';
+        for (let i = 0; i < e.results.length; i++){
+          const r = e.results[i];
+          if (r.isFinal) fin += r[0].transcript; else interim += r[0].transcript;
+        }
+        talk.finalText = fin; talk.lastText = (fin + ' ' + interim).trim();
+        transcriptEl.textContent = talk.lastText || '…';
+      };
+      rec.onerror = (e) => {
+        talk.lastError = e.error || 'error';
+        if (e.error === 'aborted') return;
+        if (MIC_ERR[e.error]) setStatus(MIC_ERR[e.error]); else setStatus('micError', String(e.error || ''));
+      };
+      rec.onend = () => {
+        talk.listening = false; talk.rec = null; updateMicUI();
+        const said = (talk.finalText || talk.lastText).trim();
+        if (said){ setStatus('micReady'); transcriptEl.textContent = said; handleUtterance(said); }
+        else if (!talk.lastError){ setStatus('micNothing'); transcriptEl.textContent = '—'; }
+        else transcriptEl.textContent = '—';
+      };
+      try { rec.start(); } catch (e) { talk.rec = null; setStatus('micError', e.name || ''); return; }
+      talk.listening = true; setStatus('micListeningNow'); updateMicUI();
+    }
+    function stopListening(){
+      if (talk.rec) { try { talk.rec.stop(); } catch (e) { /* already stopped */ } }
+    }
+    // Press once to talk (it stops by itself when you pause), press again to stop early,
+    // or hold the button while you talk and release it when done. Enter / Space toggle.
+    micBtn.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      talk.downAt = Date.now(); talk.wasListening = talk.listening;
+      if (!talk.listening) startListening();
+    });
+    micBtn.addEventListener('pointerup', () => {
+      if (!talk.wasListening && talk.listening && Date.now() - talk.downAt > 700) stopListening();
+    });
+    micBtn.addEventListener('click', (e) => {
+      if (e.detail === 0){ talk.listening ? stopListening() : startListening(); return; }   // keyboard
+      if (talk.wasListening) stopListening();
+    });
+    stopBtn.addEventListener('click', () => { stopTalking(); stopListening(); });
+    askForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = askInput.value;
+      askInput.value = '';
+      handleUtterance(q);
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (talk.listening || avatarEl.classList.contains('speaking'))) { stopTalking(); stopListening(); } });
+    voiceToggle.addEventListener('change', () => { if (!voiceToggle.checked) stopTalking(); });
+    if (TTS_OK){
+      try { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', () => {}); } catch (e) { /* ignore */ }
+    }
+
     applyLanguage();
     loadScenario();
+    setStatus(SpeechRec ? 'micReady' : 'micUnsupported');
+    $('voiceNote').hidden = TTS_OK;
   </script>
 </body>
 </html>

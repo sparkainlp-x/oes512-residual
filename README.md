@@ -15,7 +15,7 @@ OES-512 = 16 × OES-32 residual blocks. This repository publishes a **reference 
 - **Latch:** a block latches if S ≥ τ, default τ = 0.50.
 - **Synthetic regimes:** Stable, Noisy, Localized Burst, Global Shock (Gaussian residuals, seed 42, 1,000 trials per regime).
 - **Avatar:** [`sparky-oes512.html`](sparky-oes512.html) runs the same score and latch in the browser and maps latched blocks to a face.
-- **Educational demo:** [`sparky-oes512-demo.html`](sparky-oes512-demo.html) is a separate bilingual (EN/FR-CA) explainer page with a residual heatmap, missing-data handling and an experimental parity signal. It is **not** the normative reference; see [Sparky OES-512 demo](#sparky-oes-512-demo-educational).
+- **Educational demo:** [`sparky-oes512-demo.html`](sparky-oes512-demo.html) is a separate bilingual (EN/FR-CA) explainer page with a residual heatmap, missing-data handling, an experimental parity signal, and a "Talk to Sparky" voice/text assistant that runs offline with simple rules. It is **not** the normative reference; see [Sparky OES-512 demo](#sparky-oes-512-demo-educational).
 
 Files:
 
@@ -26,6 +26,8 @@ Files:
 | [`tests/test_oes512.py`](tests/test_oes512.py) | pytest suite: known vectors, input validation, determinism, seed-42 regression |
 | [`sparky-oes512-demo.html`](sparky-oes512-demo.html) | Separate educational demo page (self-contained, no external scripts); not the normative reference |
 | [`tests/sparky-demo.test.mjs`](tests/sparky-demo.test.mjs) | Node self-test for the demo's scoring and summary core (`node tests/sparky-demo.test.mjs`) |
+| [`tests/sparky-brain.test.mjs`](tests/sparky-brain.test.mjs) | Node self-test for the demo's offline "Talk to Sparky" brain, i18n and no-network checks |
+| [`tests/sparky-smoke.mjs`](tests/sparky-smoke.mjs) | Headless Chrome smoke test for the demo page (skips if no Chrome/Chromium is installed) |
 
 ## What it is NOT
 
@@ -78,7 +80,17 @@ Hosted copy on GitHub Pages: <https://sparkainlp-x.github.io/oes512-residual/spa
   - it uses its own scenarios instead of the seed-42 benchmark;
   - it leaves missing channels out of the score and shows such blocks in a separate "missing data" state, never as an anomaly.
 - **Parity asymmetry (experimental).** A = |mean(r)| / (mean|r| + ε) per block: 0 for symmetric zero-mean residuals, 1 when all residuals share one sign. It is an analogy to physical parity and an exploratory signal, **not validated**. It is shown next to the main score and does not trigger alerts unless you tick its checkbox.
-- **Tests:** `node tests/sparky-demo.test.mjs` (Node ≥ 18) loads the page's delimited scoring core and checks the scenarios, missing-data handling, the French summaries, the parity bounds and CSV parsing. CI runs it on Node 20.
+- **Tests:** `node tests/sparky-demo.test.mjs` (Node ≥ 18) loads the page's delimited scoring core and checks the scenarios, missing-data handling, the French summaries, the parity bounds and CSV parsing. `node tests/sparky-brain.test.mjs` checks the "Talk to Sparky" brain in both languages against the core's numbers, and that the page makes no network calls. `node tests/sparky-smoke.mjs` loads the page in headless Chrome, with and without the Web Speech APIs, and asks it questions through the text box. CI runs all three on Node 20.
+
+### Talk to Sparky (demo v0.4.0)
+
+The demo page has a **Talk to Sparky / Parler à Sparky** panel. Press the button and ask a question out loud (or hold it while you talk), or type in the text box. Sparky answers in the page language, shows the answer in a conversation log and reads it aloud, and the beaver's mouth moves while it speaks (a static open mouth when the system asks for reduced motion).
+
+- **What you can ask:** "what's the status?", "explain block 6" (also "B06", "bloc six"), "how does the score work?", "what is the syndrome?", "what about missing data?", "what is the parity meter?", "what are the limits?", "show drift" / "show the global shock" (switches the scenario on screen), "speak French", "who are you?", "help". In French: « quel est l'état? », « explique le bloc 6 », « montre le choc global », « parle anglais », « aide »… Medical questions ("Am I sick?") always get the same answer: this is a teaching demo, not a medical device, and a human must review every alert.
+- **How it answers:** a small rule-based "brain" in the page (keyword matching, delimited by `BEGIN/END SPARKY BRAIN`). Every number it says comes from the analysis on screen. There is no AI model, no API key and no network call; a documented, disabled hook (`SparkyRemoteBrain`) marks where an optional model-backed brain could be plugged in later.
+- **Browser support:** voice input uses the Web Speech API's `SpeechRecognition`. It works best in **Chrome and Edge**; Safari support depends on the version and on dictation settings, and Firefox has no speech recognition. Spoken replies use `speechSynthesis`, which most browsers have, but the available voices depend on the system (a Canadian English or French voice is used when one is installed). **The text box works in every browser.** When opened from a local file, Chrome may ask for microphone permission each time.
+- **Offline:** the page, the scoring and Sparky's answers run entirely in the browser with no network access.
+- **Privacy:** speech recognition is provided by the browser, not by this page. **In Chrome, your audio may be sent to Google's servers to be transcribed**, and without a connection voice input fails with a message (Edge may likewise use Microsoft's online service, and Safari Apple's). If you do not want your voice to leave your device, type your questions instead; typed questions and all of Sparky's answers stay on your device. Spoken replies use the system's voices; some browsers also offer online voices, and Sparky prefers local ones when available.
 
 ## Evidence tags
 
