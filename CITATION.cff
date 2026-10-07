@@ -33,7 +33,7 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.22985533"
     description: "Version DOI for v0.1.0 (Zenodo; earlier specification-only snapshot)"
-version: "0.5.0"
+version: "0.5.1"
 date-released: "2026-10-06"
 abstract: >-
   Reference implementation of the OES-512 layout: 512 channels as 16 blocks of
@@ -51,7 +51,10 @@ abstract: >-
   persona (Fredericton Holograms): JSON personality files change the name,
   brand line, greeting, tone, tu/vous, empathy openers and voice settings,
   while the medical-safety reply, every number and every alert or
-  missing-data fact stay locked. The
+  missing-data fact stay locked. Version 0.5.1 ships three kit
+  personas (sparky-patient, maple-curious / Maple, alder-evidence-guide /
+  Alder) and synthetic CSV fixtures matching the five built-in demo
+  scenarios. The
   per-block residual contract is defined in oes32-residual (ADR-001). Benchmark
   results are SYNTHETIC; the regimes are far apart, so perfect scores show they
   are easy to separate, not that the method is operational. Operational, field

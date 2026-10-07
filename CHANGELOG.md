@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-06
+
+Three beaver kit personas for Talk to Sparky (patient Sparky, Maple, Alder) plus synthetic CSV fixtures. The scoring core is unchanged.
+
 ### Added
 - Demo page version 0.5.1: three kit personas under `personalities/` — **sparky-patient** (gold, patient guide), **maple-curious** (teal, Maple / Érable), **alder-evidence-guide** (blue-grey, Alder / Aulne, no catchphrases). Same Fredericton Holograms brand, **vous** in French, no minimising language; safety reply and numbers stay locked.
 - Synthetic CSV fixtures under `tests/fixtures/csv/` matching the five built-in scenarios (baseline, localized anomaly B06 ≈ 1.85, progressive drift B12–B16, global shock all 16, missing data B11 blanks). SYNTHETIC only; no clinical meaning.
@@ -13,6 +17,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 - `CITATION.cff` and README list the v0.5.0 version DOI 10.5281/zenodo.23193502.
+- `CITATION.cff` version 0.5.1. `.zenodo.json` describes 0.5.1 and still sets no version, so Zenodo takes it from the tag `v0.5.1`.
 - `docs/PERSONALITY.md` and README document the three kit personas.
 ## [0.5.0] - 2026-10-06
 
