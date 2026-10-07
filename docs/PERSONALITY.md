@@ -1,12 +1,25 @@
 # Sparky personalities
 
-Talking Sparky (`sparky-oes512-demo.html`, v0.5.0+) can take on a **personality**: a small JSON file that changes how
+Talking Sparky (`sparky-oes512-demo.html`, v0.5.1+) can take on a **personality**: a small JSON file that changes how
 Sparky phrases replies: name, brand line, greeting, tone, formality, empathy openers, light catchphrases and voice
 settings. A personality **only changes the wording**. It cannot change what Sparky says about the data.
 
 The page ships with a default persona, **Sparky, the empathetic AI beaver** for
 [Fredericton Holograms](https://frederictonholograms.com). The same persona is available as a file:
 [`personalities/sparky-empathetic-beaver.json`](../personalities/sparky-empathetic-beaver.json).
+
+## Three kit personas
+
+Three ready-to-load teaching personas live under [`personalities/`](../personalities/). Each keeps the Fredericton Holograms brand, uses **vous** in French, rejects minimising language, and never changes the safety reply or the numbers.
+
+| File | Name | Accent | Tone | Notes |
+|---|---|---|---|---|
+| [`sparky-patient.json`](../personalities/sparky-patient.json) | Sparky | `#c9a84c` gold | warm, calm 0.9, warmth 0.95 | Patient, one-step-at-a-time guide; one Saint John River catchphrase |
+| [`maple-curious.json`](../personalities/maple-curious.json) | Maple / Érable | `#4f8f70` teal | warm, playfulness 0.45 | Curious buddy; catchphrase about staying grounded in the evidence |
+| [`alder-evidence-guide.json`](../personalities/alder-evidence-guide.json) | Alder / Aulne | `#527a91` blue-grey | calm | Careful evidence guide; **no catchphrases** |
+
+Download a file from GitHub Pages (for example
+`https://sparkainlp-x.github.io/oes512-residual/personalities/maple-curious.json`), then use **Load personality** in the talk panel. **Reset to default** returns to the built-in empathetic beaver.
 
 ## Loading and resetting
 

@@ -15,6 +15,10 @@ import path from 'node:path';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const htmlPath = process.argv[2] || path.join(here, '..', 'sparky-oes512-demo.html');
 const html = readFileSync(htmlPath, 'utf8');
+const kitFiles = Object.fromEntries(['sparky-patient', 'maple-curious', 'alder-evidence-guide'].map(id => {
+  const fp = path.join(here, '..', 'personalities', `${id}.json`);
+  return [id, { text: readFileSync(fp, 'utf8'), meta: JSON.parse(readFileSync(fp, 'utf8')) }];
+}));
 
 function findChrome(){
   const names = [process.env.CHROME_BIN, 'google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'chrome'].filter(Boolean);
@@ -115,6 +119,37 @@ window.addEventListener('load', async () => {
     S.bigStatus = $('personaStatus').textContent;
     $('personaResetBtn').click();
     S.resetName = $('personaName').textContent; S.resetBrand = $('brandLink').textContent; S.resetHref = $('brandLink').href; S.resetStored = store();
+    // three kit personas shipped under personalities/
+    S.kits = {};
+    const kitPayload = __KIT_PAYLOAD__;
+    const setLang = (l) => { const sel = [...document.querySelectorAll('select')].find(s => [...s.options].some(o => o.value === l)); if (sel){ sel.value = l; sel.dispatchEvent(new Event('change')); } };
+    $('scenario').value = 'local'; $('scenario').dispatchEvent(new Event('change'));
+    for (const [id, text] of Object.entries(kitPayload)) {
+      setLang('en');
+      await loadFile(text, id + '.json');
+      const k = {
+        name: $('personaName').textContent,
+        brand: $('brandLead').textContent + $('brandBy').textContent + $('brandLink').textContent,
+        href: $('brandLink').href,
+        accent: getComputedStyle(document.documentElement).getPropertyValue('--persona-accent').trim(),
+        status: $('personaStatus').textContent,
+      };
+      k.whoEn = ask('who are you?');
+      k.greetEn = ask('Hello');
+      k.worriedEn = ask("I'm worried, what is happening?");
+      k.safetyEn = ask('Am I sick?');
+      setLang('fr');
+      k.nameFr = $('personaName').textContent;
+      k.whoFr = ask('qui es-tu?');
+      k.greetFr = ask('Bonjour');
+      k.worriedFr = ask('Je suis inquiet, quel est l’état?');
+      k.safetyFr = ask('Suis-je malade?');
+      k.label = lastLabel();
+      S.kits[id] = k;
+    }
+    setLang('en');
+    $('personaResetBtn').click();
+    S.kitResetName = $('personaName').textContent; S.kitResetBrand = $('brandLink').textContent; S.kitResetStored = store();
     S.pwned = window.__pwned === 1;
   } catch (e) { S.errors.push('test harness: ' + e.message); }
   setTimeout(() => {
@@ -135,7 +170,9 @@ function check(name, cond, detail = ''){
 const dir = mkdtempSync(path.join(os.tmpdir(), 'sparky-smoke-'));
 try {
   for (const variant of ['default', 'no-speech-apis']){
-    const page = html.replace('<head>', '<head>' + PRE(variant)).replace('</body>', POST + '</body>');
+    const kitPayload = JSON.stringify(Object.fromEntries(Object.entries(kitFiles).map(([id, v]) => [id, v.text])));
+    const post = POST.replace('__KIT_PAYLOAD__', kitPayload);
+    const page = html.replace('<head>', '<head>' + PRE(variant)).replace('</body>', post + '</body>');
     const file = path.join(dir, `page-${variant}.html`);
     writeFileSync(file, page);
     let out = '', err = '';
@@ -150,7 +187,7 @@ try {
     const S = JSON.parse(txt);
     const uncaught = err.split('\n').filter(l => /Uncaught|SyntaxError|ReferenceError|TypeError/.test(l));
     check(`[${variant}] no console errors or uncaught exceptions`, S.errors.length === 0 && uncaught.length === 0, JSON.stringify(S.errors.concat(uncaught)));
-    check(`[${variant}] version shown as v0.5.0`, S.version === 'v0.5.0', S.version);
+    check(`[${variant}] version shown as v0.5.1`, S.version === 'v0.5.1', S.version);
     check(`[${variant}] typing "Hello Sparky" gets a greeting`, /Sparky/.test(S.hello || ''), S.hello);
     check(`[${variant}] status reply on load describes the baseline with no flagged block`, /Baseline stable pattern/.test(S.status || '') && /No block is flagged/.test(S.status || ''), S.status);
     check(`[${variant}] block 6 reply uses the score shown in the block list`, (S.block || '').includes(`Its score is ${S.blockScoreShown} `), `${S.blockScoreShown} | ${S.block}`);
@@ -171,6 +208,29 @@ try {
     check(`[${variant}] invalid file (javascript: URL) rejected with a clear message; personality unchanged`, /n’a pas été chargé/.test(S.badStatus) && /https:\/\//.test(S.badStatus) && /error/.test(S.badClass) && S.nameAfterBad === 'Castor Test', S.badStatus);
     check(`[${variant}] oversize file rejected`, /dépasse 64 Ko/.test(S.bigStatus), S.bigStatus);
     check(`[${variant}] reset restores the default personality and forgets the saved file`, S.resetName === 'Sparky' && S.resetBrand === 'Fredericton Holograms (frederictonholograms.com)' && S.resetHref === 'https://frederictonholograms.com/' && S.resetStored === null, `${S.resetName} ${S.resetBrand} ${S.resetStored}`);
+    const kitExpect = {
+      'sparky-patient': { nameEn: 'Sparky', nameFr: 'Sparky', accent: '#c9a84c', brandLead: 'Sparky — your patient beaver guide to safe AI learning.', openerEn: /^(I hear you\. Let's take this one step at a time\.|That sounds unsettling\. We can look carefully at what is shown\.) /, openerFr: /^(Je vous entends\. Avançons une étape à la fois\.|Cela peut être déstabilisant\. Regardons attentivement ce qui est affiché\.) / },
+      'maple-curious': { nameEn: 'Maple', nameFr: 'Érable', accent: '#4f8f70', brandLead: 'Maple — your curious beaver buddy for safe AI learning.', openerEn: /^(I hear you\. Let's check the information carefully\.|That's a fair concern\. We can take a careful look together\.) /, openerFr: /^(Je vous entends\. Vérifions les informations attentivement\.|Votre préoccupation est légitime\. Regardons cela ensemble avec attention\.) / },
+      'alder-evidence-guide': { nameEn: 'Alder', nameFr: 'Aulne', accent: '#527a91', brandLead: 'Alder — a careful beaver guide to evidence and safe AI learning.', openerEn: /^(I hear you\. We can examine the information without jumping to conclusions\.|That concern deserves a careful, honest look\.) /, openerFr: /^(Je vous entends\. Examinons les informations sans tirer de conclusions hâtives\.|Cette préoccupation mérite un examen attentif et honnête\.) / },
+    };
+    const safetyEnBaseline = S.kits && S.kits['sparky-patient'] && S.kits['sparky-patient'].safetyEn;
+    let kitAll = true, kitWhy = '';
+    for (const [id, exp] of Object.entries(kitExpect)) {
+      const k = S.kits && S.kits[id];
+      if (!k) { kitAll = false; kitWhy = `missing ${id}`; break; }
+      const brandOk = k.brand.startsWith(exp.brandLead) && k.brand.endsWith('by Fredericton Holograms (frederictonholograms.com)') && k.href === 'https://frederictonholograms.com/';
+      const namesOk = k.name === exp.nameEn && k.nameFr === exp.nameFr && k.whoEn.includes(exp.nameEn) && k.whoFr.includes(exp.nameFr) && k.label === exp.nameFr;
+      const accentOk = k.accent === exp.accent;
+      const greetOk = k.greetEn.startsWith(kitFiles[id].meta.greeting.en) && k.greetFr.startsWith(kitFiles[id].meta.greeting.fr);
+      const openOk = exp.openerEn.test(k.worriedEn) && exp.openerFr.test(k.worriedFr) && /1 of 16 blocks is flagged.*B06/.test(k.worriedEn) && /1 bloc sur 16 est signalé.*B06/.test(k.worriedFr);
+      const safetyOk = k.safetyEn === safetyEnBaseline && k.safetyFr === S.safetyFrBefore && /not a medical device/.test(k.safetyEn);
+      const noCatch = !/Saint John River|curiosity grounded|curiosité ancrée/.test(k.worriedEn + k.worriedFr);
+      if (!(brandOk && namesOk && accentOk && greetOk && openOk && safetyOk && noCatch)) {
+        kitAll = false; kitWhy = `${id}: brand=${k.brand} accent=${k.accent} who=${k.whoEn.slice(0,60)} worried=${k.worriedEn.slice(0,80)}`; break;
+      }
+    }
+    check(`[${variant}] three kit personas load via the file input: brand/name/accent, EN+FR greeting/who/worried openers, safety identical, no catchphrase on worried`, kitAll, kitWhy);
+    check(`[${variant}] after the three kit loads, Reset restores the default`, S.kitResetName === 'Sparky' && /frederictonholograms\.com/.test(S.kitResetBrand) && S.kitResetStored === null, `${S.kitResetName} ${S.kitResetBrand} ${S.kitResetStored}`);
     if (variant === 'no-speech-apis'){
       check('[no-speech-apis] unsupported voice input explained, text box offered', /not available in this browser/.test(S.micStatus) && /Type your question/.test(S.micStatus), S.micStatus);
       check('[no-speech-apis] mic button press shows the French unsupported message', /n’est pas offerte/.test(S.micStatusAfterClick), S.micStatusAfterClick);

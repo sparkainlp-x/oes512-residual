@@ -40,7 +40,7 @@ check('no http(s) URLs in src/href/action attributes', !/(src|href|action)\s*=\s
 check('empty inline favicon, so browsers do not request /favicon.ico (404 on GitHub Pages)', /<link rel="icon" href="data:,">/.test(html));
 check('brain block has no DOM, storage or network access', !/\b(document|window|localStorage|sessionStorage|fetch|XMLHttpRequest|navigator)\b/.test(brainM[1]));
 check('optional AI-model hook documented and disabled', /OPTIONAL AI-MODEL BRAIN HOOK/.test(html) && /const SparkyRemoteBrain = \{ enabled: false, reply: null/.test(html));
-check('displayed version is v0.5.0', html.includes('id="demoVersion">v0.5.0<') && html.includes("const DEMO_VERSION = '0.5.0'"));
+check('displayed version is v0.5.1', html.includes('id="demoVersion">v0.5.1<') && html.includes("const DEMO_VERSION = '0.5.1'"));
 
 // 1. i18n coverage and accessibility of the new controls
 const i18nM = scripts.match(/const I18N = (\{[\s\S]*?\n    \});/);

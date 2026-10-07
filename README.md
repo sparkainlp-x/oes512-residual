@@ -30,7 +30,11 @@ Files:
 | [`tests/sparky-personality.test.mjs`](tests/sparky-personality.test.mjs) | Node self-test for the demo's personality layer: validation, hard safety rules, numbers unchanged |
 | [`tests/sparky-smoke.mjs`](tests/sparky-smoke.mjs) | Headless Chrome smoke test for the demo page (skips if no Chrome/Chromium is installed) |
 | [`personalities/sparky-empathetic-beaver.json`](personalities/sparky-empathetic-beaver.json) | Default "Talk to Sparky" personality (empathetic AI beaver, Fredericton Holograms) as a loadable example |
-| [`docs/PERSONALITY.md`](docs/PERSONALITY.md) | Personality file format, rules and validation |
+| [`personalities/sparky-patient.json`](personalities/sparky-patient.json) | Kit persona: patient Sparky (gold) |
+| [`personalities/maple-curious.json`](personalities/maple-curious.json) | Kit persona: Maple / Érable, curious (teal) |
+| [`personalities/alder-evidence-guide.json`](personalities/alder-evidence-guide.json) | Kit persona: Alder / Aulne, evidence guide (blue-grey) |
+| [`docs/PERSONALITY.md`](docs/PERSONALITY.md) | Personality file format, rules, validation and the three kit personas |
+| [`tests/fixtures/csv/`](tests/fixtures/csv/) | Synthetic 512-value CSV fixtures matching the five built-in scenarios (no clinical meaning) |
 
 ## What it is NOT
 
@@ -95,9 +99,19 @@ The demo page has a **Talk to Sparky / Parler à Sparky** panel. Press the butto
 - **Offline:** the page, the scoring and Sparky's answers run entirely in the browser with no network access.
 - **Privacy:** speech recognition is provided by the browser, not by this page. **In Chrome, your audio may be sent to Google's servers to be transcribed**, and without a connection voice input fails with a message (Edge may likewise use Microsoft's online service, and Safari Apple's). If you do not want your voice to leave your device, type your questions instead; typed questions and all of Sparky's answers stay on your device. Spoken replies use the system's voices; some browsers also offer online voices, and Sparky prefers local ones when available.
 
-### Personality (demo v0.5.0)
+### Personality (demo v0.5.1)
 
-By default Sparky speaks as **Sparky, the empathetic AI beaver** for [Fredericton Holograms](https://frederictonholograms.com): warm, patient and honest. It opens with "I hear you." / « Ça se comprend. » when you sound worried or when alerts are on screen, and adds an occasional light beaver catchphrase. Use **Load personality** in the talk panel to load a different `.json` personality (name, brand line, greeting, tone, tu/vous, empathy openers, catchphrases, voice rate/pitch/hints, accent colour), and **Reset to default** to go back. Files are checked strictly (64 KB max, known fields only, text only, https brand links) and are never uploaded. A personality only changes the wording: the medical-safety reply, every number and every alert or missing-data fact stay exactly as the built-in brain says them, and there are no catchphrases on safety or alert replies. See [`docs/PERSONALITY.md`](docs/PERSONALITY.md) and the example [`personalities/sparky-empathetic-beaver.json`](personalities/sparky-empathetic-beaver.json).
+By default Sparky speaks as **Sparky, the empathetic AI beaver** for [Fredericton Holograms](https://frederictonholograms.com): warm, patient and honest. It opens with "I hear you." / « Ça se comprend. » when you sound worried or when alerts are on screen, and adds an occasional light beaver catchphrase. Use **Load personality** in the talk panel to load a different `.json` personality (name, brand line, greeting, tone, tu/vous, empathy openers, catchphrases, voice rate/pitch/hints, accent colour), and **Reset to default** to go back. Files are checked strictly (64 KB max, known fields only, text only, https brand links) and are never uploaded. A personality only changes the wording: the medical-safety reply, every number and every alert or missing-data fact stay exactly as the built-in brain says them, and there are no catchphrases on safety or alert replies.
+
+**Three kit personas** (same brand, **vous** in French, no minimising language):
+
+| File | Who | Accent |
+|---|---|---|
+| [`sparky-patient.json`](personalities/sparky-patient.json) | Sparky — patient, one step at a time | gold `#c9a84c` |
+| [`maple-curious.json`](personalities/maple-curious.json) | Maple / Érable — curious buddy | teal `#4f8f70` |
+| [`alder-evidence-guide.json`](personalities/alder-evidence-guide.json) | Alder / Aulne — careful evidence guide (no catchphrases) | blue-grey `#527a91` |
+
+See [`docs/PERSONALITY.md`](docs/PERSONALITY.md) and the default example [`personalities/sparky-empathetic-beaver.json`](personalities/sparky-empathetic-beaver.json).
 
 ## Evidence tags
 

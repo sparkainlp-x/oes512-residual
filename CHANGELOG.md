@@ -6,9 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Demo page version 0.5.1: three kit personas under `personalities/` — **sparky-patient** (gold, patient guide), **maple-curious** (teal, Maple / Érable), **alder-evidence-guide** (blue-grey, Alder / Aulne, no catchphrases). Same Fredericton Holograms brand, **vous** in French, no minimising language; safety reply and numbers stay locked.
+- Synthetic CSV fixtures under `tests/fixtures/csv/` matching the five built-in scenarios (baseline, localized anomaly B06 ≈ 1.85, progressive drift B12–B16, global shock all 16, missing data B11 blanks). SYNTHETIC only; no clinical meaning.
+- Personality and smoke tests cover loading all three kit files; personality test also checks the CSV fixtures against the core.
+
 ### Changed
 - `CITATION.cff` and README list the v0.5.0 version DOI 10.5281/zenodo.23193502.
-
+- `docs/PERSONALITY.md` and README document the three kit personas.
 ## [0.5.0] - 2026-10-06
 
 Sparky, the empathetic AI beaver: uploadable personalities for Talk to Sparky. The scoring core is unchanged.

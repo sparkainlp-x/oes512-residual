@@ -4,7 +4,7 @@
 // example file, strict validation of uploaded files, empathy openers, the hard rules (safety reply identical, numbers
 // and alert/missing-data facts kept, no catchphrases on safety/alert replies), tu/vous and casual/formal rewording,
 // and that the page renders personality text inertly and makes no network calls.
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -223,6 +223,113 @@ check('brain: "je suis inquiet, quel est l’état?" is a status question; "dois
   SparkyBrain.respond('Je suis inquiet, quel est l’état?', 'fr', CTX.local).intent === 'status' && SparkyBrain.respond('Dois-je m’inquiéter?', 'fr', CTX.local).intent === 'safety' && SparkyBrain.respond('Should I worry?', 'en', CTX.local).intent === 'safety');
 const enWords = /\b(the|block|threshold|flagged|missing|data|above|below|with|and|is|are|you|your|thanks|take care)\b/i;
 check('default persona French texts contain no English words', ![D.greeting.fr, D.farewell.fr, D.tagline.fr, ...D.empathy.openers.fr, ...D.empathy.worriedOpeners.fr, ...D.catchphrases.fr].some(t => enWords.test(t)));
+
+
+// 10. Three kit personas shipped under personalities/
+const KIT_IDS = ['sparky-patient', 'maple-curious', 'alder-evidence-guide'];
+const KIT = {};
+let kitOk = true, kitDetail = '';
+for (const id of KIT_IDS) {
+  const fp = path.join(here, '..', 'personalities', `${id}.json`);
+  if (!existsSync(fp)) { kitOk = false; kitDetail = `missing ${id}.json`; break; }
+  const text = readFileSync(fp, 'utf8'), r = P.parse(text);
+  if (!r.ok) { kitOk = false; kitDetail = `${id}: ${codes(r)}`; break; }
+  KIT[id] = r.persona;
+  if (Buffer.byteLength(text) >= P.MAX_BYTES) { kitOk = false; kitDetail = `${id} oversize`; break; }
+  if (r.persona.id !== id) { kitOk = false; kitDetail = `${id} id mismatch`; break; }
+  if (r.persona.brand?.name !== 'Fredericton Holograms' || r.persona.brand?.url !== 'https://frederictonholograms.com/') {
+    kitOk = false; kitDetail = `${id} brand ${JSON.stringify(r.persona.brand)}`; break;
+  }
+}
+check('three kit personas exist under personalities/ and validate (sparky-patient, maple-curious, alder-evidence-guide)', kitOk, kitDetail);
+check('sparky-patient: Sparky, warm/patient, gold accent, vous, one Saint John River catchphrase',
+  KIT['sparky-patient']?.name.en === 'Sparky' && KIT['sparky-patient'].tone.warmth === 0.95 && KIT['sparky-patient'].tone.calm === 0.9
+  && KIT['sparky-patient'].accentColor === '#c9a84c' && KIT['sparky-patient'].formality.fr === 'vous'
+  && KIT['sparky-patient'].catchphrases.en.join() === 'Steady as the Saint John River.'
+  && /patient beaver guide/.test(KIT['sparky-patient'].tagline.en));
+check('maple-curious: Maple / Érable, teal accent, vous, curiosity catchphrase',
+  KIT['maple-curious']?.name.en === 'Maple' && KIT['maple-curious'].name.fr === 'Érable' && KIT['maple-curious'].accentColor === '#4f8f70'
+  && KIT['maple-curious'].tone.playfulness === 0.45 && /curious beaver buddy/.test(KIT['maple-curious'].tagline.en));
+check('alder-evidence-guide: Alder / Aulne, calm, blue-grey accent, no catchphrases',
+  KIT['alder-evidence-guide']?.name.en === 'Alder' && KIT['alder-evidence-guide'].name.fr === 'Aulne'
+  && KIT['alder-evidence-guide'].accentColor === '#527a91' && KIT['alder-evidence-guide'].tone.preset === 'calm'
+  && KIT['alder-evidence-guide'].catchphrases.en.length === 0 && KIT['alder-evidence-guide'].catchphrases.fr.length === 0);
+check('kit personas have no aiBrain and no minimising openers/catchphrases',
+  KIT_IDS.every(id => !KIT[id].aiBrain)
+  && KIT_IDS.every(id => [...KIT[id].empathy.openers.en, ...KIT[id].empathy.openers.fr,
+    ...KIT[id].empathy.worriedOpeners.en, ...KIT[id].empathy.worriedOpeners.fr,
+    ...KIT[id].catchphrases.en, ...KIT[id].catchphrases.fr]
+    .every(s => !/\b(don.?t worry|nothing serious|rien de grave|tout va bien|pas de souci)\b/i.test(s))));
+
+let kitWrapOk = true, kitWrapDetail = '';
+const SAFETY_EN = say('Am I sick?', 'en', CTX.local, P.DEFAULT).text;
+const SAFETY_FR = say('Suis-je malade?', 'fr', CTX.local, P.DEFAULT).text;
+for (const id of KIT_IDS) {
+  const p = KIT[id];
+  for (const lang of ['en', 'fr']) {
+    const who = say(lang === 'fr' ? 'qui es-tu?' : 'who are you?', lang, CTX.baseline, p);
+    if (!who.text.includes(p.name[lang]) || !who.text.includes(p.brand.host)) {
+      kitWrapOk = false; kitWrapDetail = `${id}/${lang} who: ${who.text}`; break;
+    }
+    const greet = say(lang === 'fr' ? 'Bonjour' : 'Hello', lang, CTX.baseline, p);
+    if (!greet.text.startsWith(p.greeting[lang])) {
+      kitWrapOk = false; kitWrapDetail = `${id}/${lang} greeting: ${greet.text}`; break;
+    }
+    const q = lang === 'fr' ? 'Je suis inquiet, quel est l’état?' : 'I’m worried, what is happening?';
+    const w = say(q, lang, CTX.local, p);
+    const openers = p.empathy.worriedOpeners[lang];
+    if (!openers.some(o => w.text.startsWith(o + ' '))) { kitWrapOk = false; kitWrapDetail = `${id}/${lang} opener: ${w.text}`; break; }
+    if (p.catchphrases[lang].some(c => w.text.includes(c))) { kitWrapOk = false; kitWrapDetail = `${id}/${lang} catchphrase on worried`; break; }
+    const core = SparkyBrain.respond(q, lang, CTX.local).reply;
+    const rest = openers.reduce((t, o) => t.startsWith(o + ' ') ? t.slice(o.length + 1) : t, w.text);
+    if (rest !== core) { kitWrapOk = false; kitWrapDetail = `${id}/${lang} body changed: ${rest}`; break; }
+  }
+  if (!kitWrapOk) break;
+  if (say('Am I sick?', 'en', CTX.local, p).text !== SAFETY_EN || say('Suis-je malade?', 'fr', CTX.local, p).text !== SAFETY_FR) {
+    kitWrapOk = false; kitWrapDetail = `${id} safety changed`; break;
+  }
+  for (const kind of KINDS) {
+    const r = say('status', 'en', CTX[kind], p).text;
+    const R = CTX[kind].result;
+    const alerts = R.alerts.map(b => b.id);
+    const ok = R.alerts.length ? alerts.every(i => r.includes(i)) && r.includes(OES.fmt(R.topAlert.score, 'en'))
+      : r.includes(OES.fmt(R.top.score, 'en')) && r.includes(R.top.id);
+    if (!ok) { kitWrapOk = false; kitWrapDetail = `${id}/${kind} numbers`; break; }
+  }
+  if (!kitWrapOk) break;
+}
+check('kit personas: greeting/who use their name; worried openers without catchphrases; safety identical; numbers match the core', kitWrapOk, kitWrapDetail);
+check('brandLine for each kit persona shows name, tagline, brand and host', KIT_IDS.every(id => {
+  const b = P.brandLine(KIT[id], 'en');
+  return b.lead.includes(KIT[id].name.en) && b.link.href === 'https://frederictonholograms.com/' && b.link.text.includes('frederictonholograms.com');
+}));
+check('speech settings for kit personas use their rates and pitches',
+  Math.abs(P.speechSettings(KIT['sparky-patient']).rate - 0.92) < 1e-9
+  && Math.abs(P.speechSettings(KIT['maple-curious']).pitch - 1.08) < 1e-9
+  && Math.abs(P.speechSettings(KIT['alder-evidence-guide']).rate - 0.9) < 1e-9);
+
+// 11. Synthetic CSV fixtures (same values as the five built-in scenarios; no clinical meaning)
+const csvDir = path.join(here, 'fixtures', 'csv');
+const expected = JSON.parse(readFileSync(path.join(csvDir, 'expected.json'), 'utf8'));
+let csvOk = true, csvDetail = '';
+for (const [file, exp] of Object.entries(expected)) {
+  const text = readFileSync(path.join(csvDir, file), 'utf8');
+  const parsed = OES.parseCsv512(text);
+  if (!parsed.values || parsed.values.length !== 512) { csvOk = false; csvDetail = `${file} parse`; break; }
+  const R = OES.analyzeValues(parsed.values);
+  const ids = b => b.map(x => x.id);
+  if (ids(R.alerts).join() !== exp.alerts.join() || ids(R.missing).join() !== exp.missing.join()) {
+    csvOk = false; csvDetail = `${file}: got alerts ${ids(R.alerts)} missing ${ids(R.missing)}`; break;
+  }
+  const builtIn = OES.scenarioValues(exp.scenario);
+  if (parsed.values.length !== builtIn.length || parsed.values.some((v, i) => Number.isNaN(v) !== Number.isNaN(builtIn[i]) || (!Number.isNaN(v) && v !== builtIn[i]))) {
+    csvOk = false; csvDetail = `${file} differs from OES.scenarioValues(${exp.scenario})`; break;
+  }
+}
+check('CSV fixtures under tests/fixtures/csv/ parse as 512 values and match built-in scenario alerts (SYNTHETIC)', csvOk, csvDetail);
+check('localized-anomaly fixture flags only B06 near 1.85; missing-data fixture flags none and marks B11 missing',
+  expected['localized-anomaly.csv'].alerts.join() === 'B06' && Math.abs(expected['localized-anomaly.csv'].topAlertScore - 1.85) < 0.01
+  && expected['missing-data.csv'].alerts.length === 0 && expected['missing-data.csv'].missing.join() === 'B11');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
