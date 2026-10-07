@@ -16,6 +16,9 @@ identifiers:
     value: "10.5281/zenodo.22985532"
     description: "Concept DOI (all versions, Zenodo)"
   - type: doi
+    value: "10.5281/zenodo.23200506"
+    description: "Version DOI for v0.5.1 (Zenodo; three kit personas — patient Sparky, Maple, Alder — and synthetic CSV fixtures)"
+  - type: doi
     value: "10.5281/zenodo.23193502"
     description: "Version DOI for v0.5.0 (Zenodo; adds uploadable personalities for Talk to Sparky, with the default empathetic AI beaver persona)"
   - type: doi

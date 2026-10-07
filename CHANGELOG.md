@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- `CITATION.cff` and README list the v0.5.1 version DOI 10.5281/zenodo.23200506.
+
 ## [0.5.1] - 2026-10-06
 
 Three beaver kit personas for Talk to Sparky (patient Sparky, Maple, Alder) plus synthetic CSV fixtures. The scoring core is unchanged.
